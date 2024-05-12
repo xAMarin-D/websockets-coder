@@ -1,0 +1,17 @@
+<h3>SOCKET</h3>
+<form id="form">
+    
+    
+</form>
+
+<ul id="products">
+  {{#each products}}
+    <li>
+      <h4>{{this.title}} - ${{this.price}}</h4>
+      <p>{{this.description}}</p>
+    </li>
+  {{/each}}
+</ul>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/index.js"></script>
