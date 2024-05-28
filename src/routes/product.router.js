@@ -1,14 +1,14 @@
 import { Router } from "express";
-const router = Router();
+import ProductService from "../services/product.services.js";
 
-import ProductManager from "../manager/product.manager.js";
-const productManager = new ProductManager("./src/data/products.json");
+const router = Router();
+const productService = new ProductService();
 
 import { productValidator } from "../middlewares/validator.js";
 
 router.get("/", async (req, res) => {
   try {
-    const products = await productManager.getProducts();
+    const products = await productService.getAll();
     res.status(200).json(products);
   } catch (error) {
     res.status(500).json({ msg: error.message });
@@ -17,7 +17,7 @@ router.get("/", async (req, res) => {
 
 router.post("/", productValidator, async (req, res) => {
   try {
-    const product = await productManager.createProduct(req.body);
+    const product = await productService.create(req.body);
     res.status(201).json(product);
   } catch (error) {
     res.status(500).json({ msg: error.message });
@@ -27,7 +27,7 @@ router.post("/", productValidator, async (req, res) => {
 router.get("/:idProduct", async (req, res) => {
   try {
     const { idProduct } = req.params;
-    const product = await productManager.getProductById(idProduct);
+    const product = await productService.getById(idProduct);
     if (!product) res.status(404).json({ msg: "Product not found" });
     else res.status(200).json(product);
   } catch (error) {
@@ -38,9 +38,9 @@ router.get("/:idProduct", async (req, res) => {
 router.put("/:idProduct", async (req, res) => {
   try {
     const { idProduct } = req.params;
-    const productUpd = await productManager.updateProduct(req.body, idProduct);
+    const productUpd = await productService.update(idProduct, req.body);
     if (!productUpd) res.status(404).json({ msg: "Error updating product" });
-    res.status(200).json(productUpd);
+    else res.status(200).json(productUpd);
   } catch (error) {
     res.status(500).json({ msg: error.message });
   }
@@ -49,7 +49,7 @@ router.put("/:idProduct", async (req, res) => {
 router.delete("/:idProduct", async (req, res) => {
   try {
     const { idProduct } = req.params;
-    const delProduct = await productManager.deleteProduct(idProduct);
+    const delProduct = await productService.delete(idProduct);
     if (!delProduct) res.status(404).json({ msg: "Error delete product" });
     else
       res
