@@ -2,9 +2,15 @@ import mongoose from "mongoose";
 import { ProductModel } from "./models/product.model.js";
 
 export default class ProductDaoMongoDB {
-  async getAll() {
+  async getAll(filter, options = {}) {
     try {
-      const response = await ProductModel.find({});
+      const { limit = 10, page = 1, sort = {} } = options;
+      const response = await ProductModel.paginate(filter, {
+        limit,
+        page,
+        sort,
+        lean: true,
+      });
       return response;
     } catch (error) {
       throw new Error(error);
@@ -16,7 +22,7 @@ export default class ProductDaoMongoDB {
       if (!mongoose.Types.ObjectId.isValid(id)) {
         throw new Error("Invalid ObjectId");
       }
-      const response = await ProductModel.findById(id);
+      const response = await ProductModel.findById(id).lean();
       if (!response) {
         throw new Error("Product not found");
       }
@@ -42,6 +48,7 @@ export default class ProductDaoMongoDB {
       }
       const response = await ProductModel.findByIdAndUpdate(id, obj, {
         new: true,
+        lean: true,
       });
       if (!response) {
         throw new Error("Product not found");
@@ -57,7 +64,7 @@ export default class ProductDaoMongoDB {
       if (!mongoose.Types.ObjectId.isValid(id)) {
         throw new Error("Invalid ObjectId");
       }
-      const response = await ProductModel.findByIdAndDelete(id);
+      const response = await ProductModel.findByIdAndDelete(id).lean();
       if (!response) {
         throw new Error("Product not found");
       }

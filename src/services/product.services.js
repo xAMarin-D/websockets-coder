@@ -5,8 +5,8 @@ export default class ProductService {
     this.dao = new ProductDaoMongoDB();
   }
 
-  async getAll() {
-    return await this.dao.getAll();
+  async getAll(filter, options) {
+    return await this.dao.getAll(filter, options);
   }
 
   async getById(id) {
