@@ -97,4 +97,68 @@ export default class CartDaoMongoDB {
       throw new Error(error);
     }
   }
+
+  async deleteProduct(cartId, productId) {
+    try {
+      const cart = await CartModel.findById(cartId);
+      if (!cart) {
+        throw new Error("Cart not found");
+      }
+      cart.products = cart.products.filter(
+        (p) => p.productId.toString() !== productId
+      );
+      const updatedCart = await cart.save();
+      return updatedCart;
+    } catch (error) {
+      throw new Error(error);
+    }
+  }
+
+  async updateCart(cartId, products) {
+    try {
+      const cart = await CartModel.findById(cartId);
+      if (!cart) {
+        throw new Error("Cart not found");
+      }
+      cart.products = products;
+      const updatedCart = await cart.save();
+      return updatedCart;
+    } catch (error) {
+      throw new Error(error);
+    }
+  }
+
+  async updateProductQuantity(cartId, productId, quantity) {
+    try {
+      const cart = await CartModel.findById(cartId);
+      if (!cart) {
+        throw new Error("Cart not found");
+      }
+      const productIndex = cart.products.findIndex(
+        (p) => p.productId.toString() === productId
+      );
+      if (productIndex === -1) {
+        throw new Error("Product not found in cart");
+      }
+      cart.products[productIndex].quantity = quantity;
+      const updatedCart = await cart.save();
+      return updatedCart;
+    } catch (error) {
+      throw new Error(error);
+    }
+  }
+
+  async deleteAllProducts(cartId) {
+    try {
+      const cart = await CartModel.findById(cartId);
+      if (!cart) {
+        throw new Error("Cart not found");
+      }
+      cart.products = [];
+      const updatedCart = await cart.save();
+      return updatedCart;
+    } catch (error) {
+      throw new Error(error);
+    }
+  }
 }

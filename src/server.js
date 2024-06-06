@@ -33,8 +33,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/products", productRouter);
 app.use("/carts", cartRouter);
 
-//ENTREGA ANTERIOR WEBSOCKET DEPRECADO
-
 app.get("/", async (req, res) => {
   try {
     const data = await fs.readFile(
@@ -47,6 +45,10 @@ app.get("/", async (req, res) => {
     console.error("Error al cargar los productos:", error);
     res.status(500).send("Error al cargar la página");
   }
+});
+
+app.get("/products-view", async (req, res) => {
+  res.render("products");
 });
 
 app.get("/realtimeproducts", async (req, res) => {
@@ -62,8 +64,6 @@ app.get("/realtimeproducts", async (req, res) => {
     res.status(500).send("Error al cargar la página");
   }
 });
-
-//CHAT FUNCTION
 
 app.get("/chat", async (req, res) => {
   res.render("chat");
@@ -88,7 +88,6 @@ io.on("connection", (socket) => {
   });
 });
 
-//CONNECT Y MAS
 app.use(errorHandler);
 
 if (process.env.PERSISTENCE === "MONGO") {

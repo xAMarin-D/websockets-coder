@@ -49,4 +49,38 @@ export default class CartService {
     }
     return await this.dao.addProductToCart(cartId, productId, quantity);
   }
+
+  async deleteProduct(cartId, productId) {
+    if (
+      !mongoose.Types.ObjectId.isValid(cartId) ||
+      !mongoose.Types.ObjectId.isValid(productId)
+    ) {
+      throw new Error("Invalid ObjectId");
+    }
+    return await this.dao.deleteProduct(cartId, productId);
+  }
+
+  async updateCart(cartId, products) {
+    if (!mongoose.Types.ObjectId.isValid(cartId)) {
+      throw new Error("Invalid ObjectId");
+    }
+    return await this.dao.updateCart(cartId, products);
+  }
+
+  async updateProductQuantity(cartId, productId, quantity) {
+    if (
+      !mongoose.Types.ObjectId.isValid(cartId) ||
+      !mongoose.Types.ObjectId.isValid(productId)
+    ) {
+      throw new Error("Invalid ObjectId");
+    }
+    return await this.dao.updateProductQuantity(cartId, productId, quantity);
+  }
+
+  async deleteAllProducts(cartId) {
+    if (!mongoose.Types.ObjectId.isValid(cartId)) {
+      throw new Error("Invalid ObjectId");
+    }
+    return await this.dao.deleteAllProducts(cartId);
+  }
 }

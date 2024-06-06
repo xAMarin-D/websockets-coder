@@ -97,3 +97,48 @@ export const addProductToCart = async (req, res, next) => {
     next(error.message);
   }
 };
+
+export const deleteProductFromCart = async (req, res, next) => {
+  try {
+    const { id, pid } = req.params;
+    const updatedCart = await cartService.deleteProduct(id, pid);
+    res.json(updatedCart);
+  } catch (error) {
+    next(error.message);
+  }
+};
+
+export const updateCart = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const updatedCart = await cartService.updateCart(id, req.body);
+    res.json(updatedCart);
+  } catch (error) {
+    next(error.message);
+  }
+};
+
+export const updateProductQuantity = async (req, res, next) => {
+  try {
+    const { id, pid } = req.params;
+    const { quantity } = req.body;
+    const updatedCart = await cartService.updateProductQuantity(
+      id,
+      pid,
+      quantity
+    );
+    res.json(updatedCart);
+  } catch (error) {
+    next(error.message);
+  }
+};
+
+export const deleteAllProductsFromCart = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const updatedCart = await cartService.deleteAllProducts(id);
+    res.json(updatedCart);
+  } catch (error) {
+    next(error.message);
+  }
+};
