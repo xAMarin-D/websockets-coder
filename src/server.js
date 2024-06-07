@@ -14,10 +14,13 @@ import handlebars from "handlebars";
 import handlebarsLayouts from "handlebars-layouts";
 import "dotenv/config";
 import { MessageModel } from "./daos/mongodb/models/chat.model.js";
+import ProductService from "./services/product.services.js"; // Asegúrate de importar el servicio
 
 const app = express();
 const httpServer = createServer(app);
 const io = new SocketIOServer(httpServer);
+
+const productService = new ProductService(); // Asegúrate de instanciar el servicio
 
 handlebars.registerHelper(handlebarsLayouts(handlebars));
 
@@ -86,6 +89,20 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("Usuario desconectado");
   });
+});
+
+// Ruta para detalles del producto
+app.get("/product/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const product = await productService.getById(id);
+    if (!product) {
+      return res.status(404).send("Product not found");
+    }
+    res.render("product", { product });
+  } catch (error) {
+    next(error);
+  }
 });
 
 app.use(errorHandler);

@@ -14,7 +14,6 @@ export const getAll = async (req, res, next) => {
       availability,
     } = req.query;
 
-    // Filter
     let filter = {};
     if (query) {
       filter.title = { $regex: query, $options: "i" };
@@ -26,7 +25,6 @@ export const getAll = async (req, res, next) => {
       filter.stock = { $gt: availability > 0 ? 0 : -1 };
     }
 
-    // Options
     const options = {
       limit: parseInt(limit),
       page: parseInt(page),
@@ -34,10 +32,8 @@ export const getAll = async (req, res, next) => {
         sort === "asc" ? { price: 1 } : sort === "desc" ? { price: -1 } : {},
     };
 
-    // Page
     const response = await productService.getAll(filter, options);
 
-    // Response
     const result = {
       status: "success",
       payload: response.docs,
@@ -71,9 +67,11 @@ export const getById = async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ msg: "Invalid ObjectId" });
     }
-    const prod = await productService.getById(id);
-    if (!prod) res.status(404).json({ msg: "Product not found" });
-    else res.json(prod);
+    const product = await productService.getById(id);
+    if (!product) {
+      return res.status(404).json({ msg: "Product not found" });
+    }
+    return product;
   } catch (error) {
     next(error);
   }
