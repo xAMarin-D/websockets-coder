@@ -2,7 +2,6 @@ import { initMongoDB } from "./daos/mongodb/connection.js";
 import express from "express";
 import { createServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
-import fs from "fs/promises";
 import path from "path";
 import { __dirname } from "./utils.js";
 import productRouter from "./routes/product.router.js";
@@ -15,13 +14,28 @@ import handlebarsLayouts from "handlebars-layouts";
 import "dotenv/config";
 import { MessageModel } from "./daos/mongodb/models/chat.model.js";
 import ProductService from "./services/product.services.js"; // Asegúrate de importar el servicio
+import cookieParser from "cookie-parser";
+import session from "express-session";
+import MongoStore from "connect-mongo";
+import userRouter from "./routes/user.router.js";
+import viewsRouter from "./routes/views.router.js";
 
 const app = express();
 const httpServer = createServer(app);
 const io = new SocketIOServer(httpServer);
+const storeConfig = {
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URL,
+    crypto: { secret: process.env.SECRET_KEY },
+    ttl: 180,
+  }),
+  secret: process.env.SECRET_KEY,
+  resave: true,
+  saveUninitialized: true,
+  cookie: { maxAge: 180000 },
+};
 
-const productService = new ProductService(); // Asegúrate de instanciar el servicio
-
+const productService = new ProductService();
 handlebars.registerHelper(handlebarsLayouts(handlebars));
 
 app.engine("handlebars", engine({ handlebars }));
@@ -32,40 +46,19 @@ app.use(morgan("dev"));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.use("/products", productRouter);
 app.use("/carts", cartRouter);
 
-app.get("/", async (req, res) => {
-  try {
-    const data = await fs.readFile(
-      path.join(__dirname, "data", "products.json"),
-      "utf8"
-    );
-    const products = JSON.parse(data);
-    res.render("websocket", { products });
-  } catch (error) {
-    console.error("Error al cargar los productos:", error);
-    res.status(500).send("Error al cargar la página");
-  }
-});
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(session(storeConfig));
+
+app.use("/users", userRouter);
+app.use("/views", viewsRouter);
 
 app.get("/products-view", async (req, res) => {
   res.render("products");
-});
-
-app.get("/realtimeproducts", async (req, res) => {
-  try {
-    const data = await fs.readFile(
-      path.join(__dirname, "data", "products.json"),
-      "utf8"
-    );
-    const products = JSON.parse(data);
-    res.render("realtimeproducts", { products });
-  } catch (error) {
-    console.error("Error al cargar los productos en tiempo real:", error);
-    res.status(500).send("Error al cargar la página");
-  }
 });
 
 app.get("/chat", async (req, res) => {
