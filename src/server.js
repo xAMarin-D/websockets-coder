@@ -26,12 +26,11 @@ const io = new SocketIOServer(httpServer);
 const storeConfig = {
   store: MongoStore.create({
     mongoUrl: process.env.MONGO_URL,
-    crypto: { secret: process.env.SECRET_KEY },
     ttl: 180,
   }),
   secret: process.env.SECRET_KEY,
-  resave: true,
-  saveUninitialized: true,
+  resave: false,
+  saveUninitialized: false,
   cookie: { maxAge: 180000 },
 };
 
@@ -46,16 +45,23 @@ app.use(morgan("dev"));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use("/products", productRouter);
-app.use("/carts", cartRouter);
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(session(storeConfig));
 
+// Middleware para evitar el almacenamiento en caché
+app.use((req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  next();
+});
+
+app.use("/products", productRouter);
+app.use("/carts", cartRouter);
 app.use("/users", userRouter);
 app.use("/views", viewsRouter);
+
+app.get("/", (req, res) => {
+  res.redirect("/views/login");
+});
 
 app.get("/products-view", async (req, res) => {
   res.render("products");
