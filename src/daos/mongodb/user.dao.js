@@ -1,3 +1,5 @@
+import bcrypt from "bcrypt";
+
 export default class UserDao {
   constructor(model) {
     this.model = model;
@@ -5,10 +7,14 @@ export default class UserDao {
 
   async register(user) {
     try {
-      const { email } = user;
+      const { email, password } = user;
       const existUser = await this.model.findOne({ email });
-      if (!existUser) return await this.model.create(user);
-      else return null;
+      if (!existUser) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        return await this.model.create({ ...user, password: hashedPassword });
+      } else {
+        return null;
+      }
     } catch (error) {
       throw new Error(error);
     }
@@ -16,7 +22,12 @@ export default class UserDao {
 
   async login(email, password) {
     try {
-      return await this.model.findOne({ email, password }); //null || user
+      const user = await this.model.findOne({ email });
+      if (user && (await bcrypt.compare(password, user.password))) {
+        return user;
+      } else {
+        return null;
+      }
     } catch (error) {
       throw new Error(error);
     }

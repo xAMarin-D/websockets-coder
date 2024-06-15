@@ -38,7 +38,6 @@ export const profile = (req, res) => {
 
 export const register = async (req, res) => {
   try {
-    console.log(req.body);
     const { email, password } = req.body;
     if (email === "adminCoder@coder.com" && password === "adminCoder123") {
       const user = await userDao.register({
