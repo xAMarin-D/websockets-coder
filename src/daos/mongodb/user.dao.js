@@ -1,14 +1,15 @@
+import { UserModel } from "./models/user.model.js";
 import bcrypt from "bcrypt";
 
 export default class UserDao {
-  constructor(model) {
-    this.model = model;
+  constructor() {
+    this.model = UserModel;
   }
 
   async register(user) {
     try {
       const { email, password } = user;
-      const existUser = await this.model.findOne({ email });
+      const existUser = await this.getByEmail(email);
       if (!existUser) {
         const hashedPassword = await bcrypt.hash(password, 10);
         return await this.model.create({ ...user, password: hashedPassword });
@@ -31,5 +32,17 @@ export default class UserDao {
     } catch (error) {
       throw new Error(error);
     }
+  }
+
+  async getByEmail(email) {
+    return await this.model.findOne({ email });
+  }
+
+  async getById(id) {
+    return await this.model.findById(id);
+  }
+
+  async validatePassword(password, hashedPassword) {
+    return await bcrypt.compare(password, hashedPassword);
   }
 }

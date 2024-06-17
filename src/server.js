@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { initMongoDB } from "./daos/mongodb/connection.js";
 import express from "express";
 import { createServer } from "http";
@@ -11,14 +12,16 @@ import { errorHandler } from "./middlewares/errorHandler.js";
 import { engine } from "express-handlebars";
 import handlebars from "handlebars";
 import handlebarsLayouts from "handlebars-layouts";
-import "dotenv/config";
 import { MessageModel } from "./daos/mongodb/models/chat.model.js";
-import ProductService from "./services/product.services.js"; // Asegúrate de importar el servicio
+import ProductService from "./services/product.services.js";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import MongoStore from "connect-mongo";
 import userRouter from "./routes/user.router.js";
 import viewsRouter from "./routes/views.router.js";
+import passport from "passport";
+import "./passport/github.js";
+import "./passport/local.js";
 
 const app = express();
 const httpServer = createServer(app);
@@ -37,7 +40,16 @@ const storeConfig = {
 const productService = new ProductService();
 handlebars.registerHelper(handlebarsLayouts(handlebars));
 
-app.engine("handlebars", engine({ handlebars }));
+app.engine(
+  "handlebars",
+  engine({
+    handlebars,
+    runtimeOptions: {
+      allowProtoPropertiesByDefault: true,
+      allowProtoMethodsByDefault: true,
+    },
+  })
+);
 app.set("view engine", "handlebars");
 app.set("views", path.join(__dirname, "views"));
 
@@ -47,8 +59,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(session(storeConfig));
+app.use(passport.initialize());
+app.use(passport.session());
 
-// Middleware para evitar el almacenamiento en caché
 app.use((req, res, next) => {
   res.set("Cache-Control", "no-store");
   next();
@@ -90,7 +103,6 @@ io.on("connection", (socket) => {
   });
 });
 
-// Ruta para detalles del producto
 app.get("/product/:id", async (req, res, next) => {
   try {
     const { id } = req.params;

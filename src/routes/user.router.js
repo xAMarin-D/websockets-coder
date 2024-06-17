@@ -1,20 +1,38 @@
 import { Router } from "express";
-const router = Router();
+import passport from "passport";
 import {
   login,
   logout,
-  visit,
-  infoSession,
   register,
   profile,
+  githubResponse,
 } from "../controllers/user.controllers.js";
-import { validateLogin } from "../middlewares/validateLogin.js";
 
-router.post("/login", login);
+const router = Router();
+
 router.post("/register", register);
-router.get("/info", validateLogin, infoSession);
-router.get("/secret-endpoint", validateLogin, visit);
+router.post(
+  "/login",
+  passport.authenticate("login", {
+    successRedirect: "/views/profile",
+    failureRedirect: "/views/login",
+    failureFlash: true,
+  })
+);
+
+router.get(
+  "/auth/github",
+  passport.authenticate("github", { scope: ["user:email"] })
+);
+router.get(
+  "/auth/github/callback",
+  passport.authenticate("github", {
+    failureRedirect: "/views/login",
+  }),
+  githubResponse
+);
+
+router.get("/profile", profile);
 router.post("/logout", logout);
-router.get("/profile", validateLogin, profile); // Asegúrate de que esta ruta esté protegida
 
 export default router;

@@ -2,37 +2,34 @@ import UserDao from "../daos/mongodb/user.dao.js";
 import { UserModel } from "../daos/mongodb/models/user.model.js";
 const userDao = new UserDao(UserModel);
 
-export const login = async (req, res) => {
+export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const user = await userDao.login(email, password);
     if (!user) {
-      return res.status(401).json({ msg: "No estas autorizado" });
+      return res.status(401).json({ msg: "No estás autorizado" });
     }
-    req.session.email = user.email;
-    req.session.first_name = user.first_name;
-    req.session.last_name = user.last_name;
-    req.session.age = user.age;
-    req.session.role = user.role;
-    res.redirect("/views/profile");
+    req.login(user, (err) => {
+      if (err) {
+        return next(err);
+      }
+      req.session.user = user; // Almacenar los datos del usuario en la sesión
+      res.redirect("/views/profile");
+    });
   } catch (error) {
-    throw new Error(error);
+    next(error);
   }
 };
 
 export const profile = (req, res) => {
-  if (!req.session.email) {
+  console.log("User in session:", req.session.user); // Log para verificar los datos del usuario
+  console.log("User from passport:", req.user); // Log para verificar los datos del usuario
+
+  if (!req.session.passport || !req.session.passport.user) {
     return res.redirect("/views/login");
   }
 
-  const user = {
-    first_name: req.session.first_name,
-    last_name: req.session.last_name,
-    email: req.session.email,
-    age: req.session.age,
-    role: req.session.role,
-  };
-
+  const user = req.user;
   res.render("profile", { user });
 };
 
@@ -56,19 +53,8 @@ export const register = async (req, res) => {
   }
 };
 
-export const visit = (req, res) => {
-  req.session.info && req.session.info.contador++;
-  res.json({
-    msg: `${req.session.info.username} ha visitado el sitio ${req.session.info.contador} veces`,
-  });
-};
-
-export const infoSession = (req, res) => {
-  res.json({
-    session: req.session,
-    sessionId: req.sessionID,
-    cookies: req.cookies,
-  });
+export const githubResponse = async (req, res) => {
+  res.redirect("/views/profile");
 };
 
 export const logout = (req, res) => {
