@@ -42,6 +42,10 @@ export default class UserDao {
     return await this.model.findById(id);
   }
 
+  async getByGitHubId(githubId) {
+    return await this.model.findOne({ githubId });
+  }
+
   async validatePassword(password, hashedPassword) {
     return await bcrypt.compare(password, hashedPassword);
   }

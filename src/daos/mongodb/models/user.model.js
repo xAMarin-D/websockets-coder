@@ -26,6 +26,10 @@ const userSchema = new Schema({
   githubId: {
     type: String,
   },
+  cartId: {
+    type: Schema.Types.ObjectId,
+    ref: "Carts",
+  },
 });
 
 export const UserModel = model("users2", userSchema);

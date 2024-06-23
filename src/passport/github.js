@@ -1,41 +1,34 @@
-import passport from "passport";
 import { Strategy as GithubStrategy } from "passport-github2";
+import passport from "passport";
 import UserDao from "../daos/mongodb/user.dao.js";
+import { UserModel } from "../daos/mongodb/models/user.model.js";
+const userDao = new UserDao(UserModel);
 
-const userDao = new UserDao();
-
-const strategyOptions = {
+const strategyConfig = {
   clientID: process.env.GITHUB_CLIENT_ID,
   clientSecret: process.env.GITHUB_CLIENT_SECRET,
   callbackURL: process.env.GITHUB_CALLBACK_URL,
-  scope: ["user:email"],
 };
 
 const registerOrLogin = async (accessToken, refreshToken, profile, done) => {
   try {
-    const email =
-      profile.emails && profile.emails[0] ? profile.emails[0].value : null;
-    if (!email) {
-      return done(new Error("No email found in GitHub profile"));
-    }
-    let user = await userDao.getByEmail(email);
+    let user = await userDao.getByGitHubId(profile.id);
     if (!user) {
-      const newUser = {
+      user = await userDao.register({
         first_name: profile.displayName || profile.username,
         last_name: "Not provided",
-        email: email,
-        password: "N/A", // No es necesario pwd en el GBLog
+        email: profile.emails[0].value,
         githubId: profile.id,
-      };
-      user = await userDao.register(newUser);
+        password: "", // No se usará para usuarios de GitHub
+      });
     }
-    done(null, user);
+    return done(null, user);
   } catch (error) {
-    done(error);
+    return done(error);
   }
 };
 
-passport.use(new GithubStrategy(strategyOptions, registerOrLogin));
+passport.use(new GithubStrategy(strategyConfig, registerOrLogin));
 
 passport.serializeUser((user, done) => {
   done(null, user._id);

@@ -1,7 +1,7 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
+import bcrypt from "bcrypt";
 import UserDao from "../daos/mongodb/user.dao.js";
-
 const userDao = new UserDao();
 
 const strategyOptions = {
@@ -10,14 +10,17 @@ const strategyOptions = {
   passReqToCallback: true,
 };
 
-const signup = async (req, email, password, done) => {
+const register = async (req, email, password, done) => {
   try {
     const user = await userDao.getByEmail(email);
     if (user) return done(null, false);
-    const newUser = await userDao.register(req.body);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await userDao.register({
+      ...req.body,
+      password: hashedPassword,
+    });
     return done(null, newUser);
   } catch (error) {
-    console.log(error);
     return done(error);
   }
 };
@@ -26,19 +29,15 @@ const login = async (req, email, password, done) => {
   try {
     const user = await userDao.getByEmail(email);
     if (!user) return done(null, false);
-    const isValidPassword = await userDao.validatePassword(
-      password,
-      user.password
-    );
+    const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) return done(null, false);
     return done(null, user);
   } catch (error) {
-    console.log(error);
     return done(error);
   }
 };
 
-passport.use("register", new LocalStrategy(strategyOptions, signup));
+passport.use("register", new LocalStrategy(strategyOptions, register));
 passport.use("login", new LocalStrategy(strategyOptions, login));
 
 passport.serializeUser((user, done) => {

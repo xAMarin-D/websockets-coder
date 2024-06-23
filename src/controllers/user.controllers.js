@@ -1,6 +1,9 @@
 import UserDao from "../daos/mongodb/user.dao.js";
 import { UserModel } from "../daos/mongodb/models/user.model.js";
+import CartDao from "../daos/mongodb/cart.dao.js"; // Asegúrate de tener un DAO para el carrito
+
 const userDao = new UserDao(UserModel);
+const cartDao = new CartDao(); // Crear una instancia del DAO del carrito
 
 export const login = async (req, res, next) => {
   try {
@@ -25,28 +28,42 @@ export const profile = (req, res) => {
   console.log("User in session:", req.session.user); // Log para verificar los datos del usuario
   console.log("User from passport:", req.user); // Log para verificar los datos del usuario
 
-  if (!req.session.passport || !req.session.passport.user) {
+  if (
+    !req.session.user &&
+    (!req.session.passport || !req.session.passport.user)
+  ) {
     return res.redirect("/views/login");
   }
 
-  const user = req.user;
+  const user = req.session.user || req.user;
   res.render("profile", { user });
 };
 
 export const register = async (req, res) => {
   try {
     const { email, password } = req.body;
+    let cart = await cartDao.createCart(); // Crear un nuevo carrito
     if (email === "adminCoder@coder.com" && password === "adminCoder123") {
       const user = await userDao.register({
         ...req.body,
         role: "admin",
+        cartId: cart._id, // Asignar el ID del carrito al usuario
       });
       if (!user) res.status(401).json({ msg: "user exist!" });
-      else res.redirect("/views/login");
+      else {
+        req.session.user = user; // Almacenar los datos del usuario en la sesión
+        res.redirect("/views/login");
+      }
     } else {
-      const user = await userDao.register(req.body);
+      const user = await userDao.register({
+        ...req.body,
+        cartId: cart._id, // Asignar el ID del carrito al usuario
+      });
       if (!user) res.status(401).json({ msg: "user exist!" });
-      else res.redirect("/views/login");
+      else {
+        req.session.user = user; // Almacenar los datos del usuario en la sesión
+        res.redirect("/views/login");
+      }
     }
   } catch (error) {
     throw new Error(error);
@@ -64,4 +81,12 @@ export const logout = (req, res) => {
     }
     res.redirect("/views/login");
   });
+};
+
+export const getCurrentSession = (req, res) => {
+  if (req.session.user) {
+    return res.json({ user: req.session.user });
+  } else {
+    return res.status(401).json({ msg: "No user session found" });
+  }
 };

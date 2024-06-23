@@ -22,6 +22,7 @@ import viewsRouter from "./routes/views.router.js";
 import passport from "passport";
 import "./passport/github.js";
 import "./passport/local.js";
+import sessionRouter from "./routes/session.router.js";
 
 const app = express();
 const httpServer = createServer(app);
@@ -71,6 +72,7 @@ app.use("/products", productRouter);
 app.use("/carts", cartRouter);
 app.use("/users", userRouter);
 app.use("/views", viewsRouter);
+app.use("/api/sessions", sessionRouter);
 
 app.get("/", (req, res) => {
   res.redirect("/views/login");
@@ -117,6 +119,16 @@ app.get("/product/:id", async (req, res, next) => {
 });
 
 app.use(errorHandler);
+
+app.get("/api/sessions/current", (req, res) => {
+  if (req.isAuthenticated()) {
+    res.json({
+      user: req.user,
+    });
+  } else {
+    res.status(401).json({ error: "Unauthorized" });
+  }
+});
 
 if (process.env.PERSISTENCE === "MONGO") {
   initMongoDB();

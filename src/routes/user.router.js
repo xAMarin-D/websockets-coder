@@ -6,6 +6,7 @@ import {
   register,
   profile,
   githubResponse,
+  getCurrentSession,
 } from "../controllers/user.controllers.js";
 
 const router = Router();
@@ -34,5 +35,6 @@ router.get(
 
 router.get("/profile", profile);
 router.post("/logout", logout);
+router.get("/api/sessions/current", getCurrentSession);
 
 export default router;
