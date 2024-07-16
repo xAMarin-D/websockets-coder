@@ -71,7 +71,7 @@ export const getById = async (req, res, next) => {
     if (!product) {
       return res.status(404).json({ msg: "Product not found" });
     }
-    return product;
+    res.json(product);
   } catch (error) {
     next(error);
   }
@@ -110,6 +110,22 @@ export const remove = async (req, res, next) => {
     const prodDel = await productService.delete(id);
     if (!prodDel) res.status(404).json({ msg: "Error removing product" });
     else res.json(prodDel);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const renderProduct = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ msg: "Invalid ObjectId" });
+    }
+    const product = await productService.getById(id);
+    if (!product) {
+      return res.status(404).json({ msg: "Product not found" });
+    }
+    res.render("product", { product });
   } catch (error) {
     next(error);
   }

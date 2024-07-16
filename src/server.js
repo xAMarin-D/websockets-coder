@@ -1,32 +1,32 @@
 import "dotenv/config";
-import { initMongoDB } from "./daos/mongodb/connection.js";
+import { initMongoDB } from "./db/connection.js";
 import express from "express";
 import { createServer } from "http";
-import { Server as SocketIOServer } from "socket.io";
 import path from "path";
 import { __dirname } from "./utils.js";
-import productRouter from "./routes/product.router.js";
-import cartRouter from "./routes/cart.router.js";
 import morgan from "morgan";
-import { errorHandler } from "./middlewares/errorHandler.js";
 import { engine } from "express-handlebars";
 import handlebars from "handlebars";
 import handlebarsLayouts from "handlebars-layouts";
-import { MessageModel } from "./daos/mongodb/models/chat.model.js";
-import ProductService from "./services/product.services.js";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import MongoStore from "connect-mongo";
+import passport from "passport";
+import { errorHandler } from "./middlewares/errorHandler.js";
+
+import productRouter from "./routes/product.router.js";
+import cartRouter from "./routes/cart.router.js";
 import userRouter from "./routes/user.router.js";
 import viewsRouter from "./routes/views.router.js";
-import passport from "passport";
-import "./passport/github.js";
-import "./passport/local.js";
 import sessionRouter from "./routes/session.router.js";
+import ProductService from "./services/product.services.js";
+import { MessageModel } from "./daos/mongodb/models/chat.model.js";
 
+//INIT CONF
 const app = express();
 const httpServer = createServer(app);
-const io = new SocketIOServer(httpServer);
+
+//CONF SESION & MONGO
 const storeConfig = {
   store: MongoStore.create({
     mongoUrl: process.env.MONGO_URL,
@@ -39,8 +39,9 @@ const storeConfig = {
 };
 
 const productService = new ProductService();
-handlebars.registerHelper(handlebarsLayouts(handlebars));
 
+//CONF HANDLEBARS
+handlebars.registerHelper(handlebarsLayouts(handlebars));
 app.engine(
   "handlebars",
   engine({
@@ -54,6 +55,7 @@ app.engine(
 app.set("view engine", "handlebars");
 app.set("views", path.join(__dirname, "views"));
 
+//MDWARES
 app.use(morgan("dev"));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
@@ -62,18 +64,19 @@ app.use(cookieParser());
 app.use(session(storeConfig));
 app.use(passport.initialize());
 app.use(passport.session());
-
 app.use((req, res, next) => {
   res.set("Cache-Control", "no-store");
   next();
 });
 
+//RUTAS
 app.use("/products", productRouter);
 app.use("/carts", cartRouter);
 app.use("/users", userRouter);
 app.use("/views", viewsRouter);
 app.use("/api/sessions", sessionRouter);
 
+//VISTAS
 app.get("/", (req, res) => {
   res.redirect("/views/login");
 });
@@ -86,6 +89,32 @@ app.get("/chat", async (req, res) => {
   res.render("chat");
 });
 
+app.get("/product/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const product = await productService.getById(id);
+    if (!product) {
+      return res.status(404).send("Product not found");
+    }
+    res.render("product", { product });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/sessions/current", (req, res) => {
+  if (req.isAuthenticated()) {
+    res.json({
+      user: req.user,
+    });
+  } else {
+    res.status(401).json({ error: "Unauthorized" });
+  }
+});
+
+//CONENCTION CHAT (EN DESUSO)
+/* 
+const io = new SocketIOServer(httpServer);
 io.on("connection", (socket) => {
   console.log("Usuario conectado");
 
@@ -104,32 +133,11 @@ io.on("connection", (socket) => {
     console.log("Usuario desconectado");
   });
 });
-
-app.get("/product/:id", async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const product = await productService.getById(id);
-    if (!product) {
-      return res.status(404).send("Product not found");
-    }
-    res.render("product", { product });
-  } catch (error) {
-    next(error);
-  }
-});
+*/
 
 app.use(errorHandler);
 
-app.get("/api/sessions/current", (req, res) => {
-  if (req.isAuthenticated()) {
-    res.json({
-      user: req.user,
-    });
-  } else {
-    res.status(401).json({ error: "Unauthorized" });
-  }
-});
-
+//MONGO CONF
 if (process.env.PERSISTENCE === "MONGO") {
   initMongoDB();
 }
