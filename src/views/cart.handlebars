@@ -1,0 +1,15 @@
+{{#extend "main"}}
+  {{#content "body"}}
+    <h1>Cart</h1>
+    {{#if products.length}}
+      <ul>
+        {{#each products}}
+          <li>{{this.title}} - {{this.quantity}}</li>
+        {{/each}}
+      </ul>
+      <a href="/checkout">Proceed to Checkout</a>
+    {{else}}
+      <p>Your cart is empty</p>
+    {{/if}}
+  {{/content}}
+{{/extend}}

@@ -1,9 +1,9 @@
 import UserDao from "../daos/mongodb/user.dao.js";
 import { UserModel } from "../daos/mongodb/models/user.model.js";
-import CartDao from "../daos/mongodb/cart.dao.js";
+import CartDao from "../daos/mongodb/cart.dao.js"; // Asegúrate de tener un DAO para el carrito
 
 const userDao = new UserDao(UserModel);
-const cartDao = new CartDao();
+const cartDao = new CartDao(); // Crear una instancia del DAO del carrito
 
 export const login = async (req, res, next) => {
   try {
@@ -25,8 +25,8 @@ export const login = async (req, res, next) => {
 };
 
 export const profile = (req, res) => {
-  console.log("User in session:", req.session.user); // LogS para verificar los datos del usuario
-  console.log("User from passport:", req.user);
+  console.log("User in session:", req.session.user); // Log para verificar los datos del usuario
+  console.log("User from passport:", req.user); // Log para verificar los datos del usuario
 
   if (
     !req.session.user &&

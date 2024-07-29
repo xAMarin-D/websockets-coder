@@ -1,9 +1,13 @@
-// src/routes/session.router.js
 import { Router } from "express";
-import { getCurrentSession } from "../controllers/user.controllers.js";
 
 const router = Router();
 
-router.get("/current", getCurrentSession);
+router.get("/current", (req, res) => {
+  if (req.isAuthenticated()) {
+    res.json({ user: req.user });
+  } else {
+    res.status(401).json({ msg: "No estás autenticado" });
+  }
+});
 
 export default router;

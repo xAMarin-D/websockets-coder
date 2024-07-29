@@ -2,6 +2,7 @@ import "dotenv/config";
 import { initMongoDB } from "./db/connection.js";
 import express from "express";
 import { createServer } from "http";
+import { Server as SocketIOServer } from "socket.io";
 import path from "path";
 import { __dirname } from "./utils.js";
 import morgan from "morgan";
@@ -14,7 +15,6 @@ import MongoStore from "connect-mongo";
 import passport from "passport";
 import "./passport/github.js";
 import "./passport/local.js";
-import { Server as SocketIOServer } from "socket.io"; // <--- Asegúrate de importar esto
 import { errorHandler } from "./middlewares/errorHandler.js";
 
 import productRouter from "./routes/product.router.js";
@@ -25,11 +25,11 @@ import sessionRouter from "./routes/session.router.js";
 import ProductService from "./services/product.services.js";
 import { MessageModel } from "./daos/mongodb/models/chat.model.js";
 
-//INIT CONF
+// INIT CONF
 const app = express();
 const httpServer = createServer(app);
 
-//CONF SESION & MONGO
+// CONF SESION & MONGO
 const storeConfig = {
   store: MongoStore.create({
     mongoUrl: process.env.MONGO_URL,
@@ -43,7 +43,7 @@ const storeConfig = {
 
 const productService = new ProductService();
 
-//CONF HANDLEBARS
+// CONF HANDLEBARS
 handlebars.registerHelper(handlebarsLayouts(handlebars));
 app.engine(
   "handlebars",
@@ -58,7 +58,7 @@ app.engine(
 app.set("view engine", "handlebars");
 app.set("views", path.join(__dirname, "views"));
 
-//MDWARES
+// MDWARES
 app.use(morgan("dev"));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
@@ -72,24 +72,42 @@ app.use((req, res, next) => {
   next();
 });
 
-//RUTAS
+// RUTAS
 app.use("/products", productRouter);
 app.use("/carts", cartRouter);
 app.use("/users", userRouter);
 app.use("/views", viewsRouter);
 app.use("/api/sessions", sessionRouter);
 
-//VISTAS
+// VISTAS
 app.get("/", (req, res) => {
   res.redirect("/views/login");
 });
 
-app.get("/products-view", async (req, res) => {
+app.get("/views/products", (req, res) => {
   res.render("products");
 });
 
-app.get("/chat", async (req, res) => {
-  res.render("chat");
+app.get("/views/login", (req, res) => {
+  res.render("login");
+});
+
+app.get("/views/register", (req, res) => {
+  res.render("register");
+});
+
+app.get("/views/profile", (req, res) => {
+  res.render("profile", { user: req.user });
+});
+
+app.get("/api/sessions/current", (req, res) => {
+  if (req.isAuthenticated()) {
+    res.json({
+      user: req.user,
+    });
+  } else {
+    res.status(401).json({ error: "Unauthorized" });
+  }
 });
 
 app.get("/product/:id", async (req, res, next) => {
@@ -102,16 +120,6 @@ app.get("/product/:id", async (req, res, next) => {
     res.render("product", { product });
   } catch (error) {
     next(error);
-  }
-});
-
-app.get("/api/sessions/current", (req, res) => {
-  if (req.isAuthenticated()) {
-    res.json({
-      user: req.user,
-    });
-  } else {
-    res.status(401).json({ error: "Unauthorized" });
   }
 });
 
@@ -137,7 +145,7 @@ io.on("connection", (socket) => {
 
 app.use(errorHandler);
 
-//MONGO CONF
+// MONGO CONF
 if (process.env.PERSISTENCE === "MONGO") {
   initMongoDB();
 }

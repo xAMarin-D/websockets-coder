@@ -1,5 +1,5 @@
-// src/routes/views.router.js
 import { Router } from "express";
+import { profile } from "../controllers/user.controllers.js";
 
 const router = Router();
 
@@ -11,20 +11,7 @@ router.get("/register", (req, res) => {
   res.render("register");
 });
 
-router.get("/profile", (req, res) => {
-  if (!req.isAuthenticated()) {
-    return res.redirect("/views/login");
-  }
-  res.render("profile", { user: req.user });
-});
-
-router.get("/products", (req, res) => {
-  res.render("products");
-});
-
-router.get("/realtimeproducts", (req, res) => {
-  res.render("realtimeproducts");
-});
+router.get("/profile", profile);
 
 router.get("/product/:id", async (req, res, next) => {
   try {
