@@ -1,3 +1,4 @@
+// src/routes/product.router.js
 import express from "express";
 import {
   getAll,

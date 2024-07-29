@@ -12,6 +12,9 @@ import cookieParser from "cookie-parser";
 import session from "express-session";
 import MongoStore from "connect-mongo";
 import passport from "passport";
+import "./passport/github.js";
+import "./passport/local.js";
+import { Server as SocketIOServer } from "socket.io"; // <--- Asegúrate de importar esto
 import { errorHandler } from "./middlewares/errorHandler.js";
 
 import productRouter from "./routes/product.router.js";
@@ -112,8 +115,6 @@ app.get("/api/sessions/current", (req, res) => {
   }
 });
 
-//CONENCTION CHAT (EN DESUSO)
-/* 
 const io = new SocketIOServer(httpServer);
 io.on("connection", (socket) => {
   console.log("Usuario conectado");
@@ -133,7 +134,6 @@ io.on("connection", (socket) => {
     console.log("Usuario desconectado");
   });
 });
-*/
 
 app.use(errorHandler);
 

@@ -28,6 +28,15 @@ export default class CartDaoMongoDB {
     }
   }
 
+  async createCart() {
+    try {
+      const cart = new CartModel();
+      return await cart.save();
+    } catch (error) {
+      throw new Error(error);
+    }
+  }
+
   async create(obj) {
     try {
       const response = await CartModel.create(obj);

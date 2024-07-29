@@ -34,6 +34,8 @@ export const getAll = async (req, res, next) => {
 
     const response = await productService.getAll(filter, options);
 
+    console.log(response.docs); // Verifica los productos aquí
+
     const result = {
       status: "success",
       payload: response.docs,

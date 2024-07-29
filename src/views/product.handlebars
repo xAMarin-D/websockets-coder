@@ -4,32 +4,90 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="/css/output.css" rel="stylesheet">
-  <title>{{product.title}} - Product Details</title>
+  <title>Product List</title>
 </head>
 <body class="bg-gray-100">
   <div class="container mx-auto p-4">
-    <h1 class="text-3xl font-bold mb-6">{{product.title}}</h1>
-    <div class="bg-white p-6 rounded-lg shadow-md">
-      <p class="text-gray-700 mb-4">{{product.description}}</p>
-      <p class="text-lg font-bold text-gray-900 mb-4">$ {{product.price}}</p>
-      <p class="text-sm text-gray-600 mb-4">Stock: {{product.stock}}</p>
-      <button id="add-to-cart" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Añadir al Carro</button>
+    <h1 class="text-3xl font-bold mb-6">Product List</h1>
+    <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Products will be loaded here -->
+    </div>
+    <div id="pagination" class="flex justify-center mt-4">
+      <!-- Pagination buttons will be loaded here -->
     </div>
   </div>
 
+  <!-- Asegúrate de que el archivo socket.io.js está disponible en esta ruta -->
+  <script src="/socket.io/socket.io.js"></script>
   <script>
-    document.getElementById('add-to-cart').addEventListener('click', () => {
-      const productId = '{{product._id}}';
-      fetch(`/carts/add-product/${productId}`, {
-        method: 'POST'
-      }).then(response => {
-        if (response.ok) {
-          alert('Product added to cart');
-        } else {
-          alert('Failed to add product to cart');
-        }
-      });
+    const socket = io();
+    let currentPage = 1;
+    const limit = 10;
+    const sort = 'asc';
+
+    socket.on('connect', () => {
+      console.log('Connected to server');
+      fetchProducts(currentPage);
     });
+
+    socket.on('products updated', (products) => {
+      renderProducts(products);
+    });
+
+    function fetchProducts(page) {
+      fetch(`http://localhost:8080/products?limit=${limit}&page=${page}&sort=${sort}`)
+        .then(response => response.json())
+        .then(data => {
+          renderProducts(data.payload);
+          renderPagination(data);
+        })
+        .catch(error => console.error('Error fetching products:', error));
+    }
+
+    function renderProducts(products) {
+      const productList = document.getElementById('product-list');
+      productList.innerHTML = '';
+
+      products.forEach(product => {
+        const productCard = document.createElement('a');
+        productCard.href = `/product/${product._id}`;
+        productCard.className = 'bg-white p-6 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 block';
+        productCard.innerHTML = `
+          <h2 class="text-xl font-semibold mb-2">${product.title}</h2>
+          <p class="text-gray-700 mb-2">${product.description}</p>
+          <p class="text-lg font-bold text-gray-900 mb-2">$${product.price}</p>
+          <p class="text-sm text-gray-600">Stock: ${product.stock}</p>
+        `;
+        productList.appendChild(productCard);
+      });
+    }
+
+    function renderPagination(data) {
+      const pagination = document.getElementById('pagination');
+      pagination.innerHTML = '';
+
+      if (data.hasPrevPage) {
+        const prevButton = document.createElement('button');
+        prevButton.className = 'mx-1 px-3 py-1 bg-gray-300 rounded hover:bg-gray-400';
+        prevButton.textContent = 'Previous';
+        prevButton.onclick = () => {
+          currentPage = data.prevPage;
+          fetchProducts(currentPage);
+        };
+        pagination.appendChild(prevButton);
+      }
+
+      if (data.hasNextPage) {
+        const nextButton = document.createElement('button');
+        nextButton.className = 'mx-1 px-3 py-1 bg-gray-300 rounded hover:bg-gray-400';
+        nextButton.textContent = 'Next';
+        nextButton.onclick = () => {
+          currentPage = data.nextPage;
+          fetchProducts(currentPage);
+        };
+        pagination.appendChild(nextButton);
+      }
+    }
   </script>
 </body>
 </html>
