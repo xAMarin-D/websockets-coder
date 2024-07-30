@@ -1,30 +1,45 @@
-{{!-- views/cart.handlebars --}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cart</title>
+  <title>Carrito</title>
   <link href="/css/output.css" rel="stylesheet">
 </head>
-<body>
-  <h1 class="text-2xl font-bold mb-4">Your Cart</h1>
-  <div class="container mx-auto">
+<body class="bg-gray-100">
+  <header class="bg-white shadow-md">
+
+  </header>
+  <main class="container mx-auto p-6">
+    <h2 class="text-3xl font-semibold mb-6">Tu Carrito</h2>
     {{#if cart}}
-      {{#each cart.products}}
-        <div class="flex justify-between items-center border-b py-2">
-          <div>
-            <p class="font-bold">{{this.productId.name}}</p>
-            <p>Quantity: {{this.quantity}}</p>
-          </div>
-          <div>
-            <p>${{this.productId.price}}</p>
-          </div>
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {{#each cart.products}}
+            <div class="flex justify-between items-center border-b py-4">
+              <div>
+                <h3 class="text-xl font-bold text-gray-800">{{this.productId.title}}</h3>
+                <p class="text-gray-600">Cantidad: {{this.quantity}}</p>
+              </div>
+              <div>
+                <p class="text-xl font-semibold text-gray-900">${{this.productId.price}}</p>
+              </div>
+            </div>
+          {{/each}}
         </div>
-      {{/each}}
+        <div class="mt-6 flex justify-between items-center">
+          <h3 class="text-xl font-semibold">Total:</h3>
+          <p class="text-2xl font-bold text-gray-900">$ {{total}}</p>
+        </div>
+        <div class="mt-6 text-right">
+          <a href="/checkout" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Proceder al Pago</a>
+        </div>
+      </div>
     {{else}}
-      <p>Your cart is empty.</p>
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <p class="text-center text-gray-500">Tu carrito está vacío.</p>
+      </div>
     {{/if}}
-  </div>
+  </main>
 </body>
 </html>

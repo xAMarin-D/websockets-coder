@@ -9,22 +9,27 @@
 <body class="bg-gray-100">
   <header class="bg-white shadow-md">
     <nav class="container mx-auto flex justify-between items-center p-4">
-      <div class="text-2xl font-bold text-blue-600">
-        <a href="/">TuTienda</a>
-      </div>
-      <div>
+      <div class="flex items-center space-x-4">
+        <div class="text-2xl font-bold text-blue-600">
+          {{#if user}}
+            <a href="/views/products">Tiendita del Ale</a>
+          {{else}}
+            <a href="/">Tiendita del Ale</a>
+          {{/if}}
+        </div>
         {{#if user}}
-          <a href="/views/cart" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg mr-4 transition duration-300">
-            Cart
-          </a>
           <a href="/views/products" class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition duration-300">Productos</a>
-        {{else}}
-          <a href="/views/login" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg mr-4 transition duration-300">Login</a>
-          <a href="/views/register" class="bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-lg transition duration-300">Register</a>
         {{/if}}
       </div>
+      {{#if user}}
+        <form action="/users/logout" method="POST">
+          <button type="submit" class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition duration-300">Logout</button>
+        </form>
+      {{/if}}
     </nav>
   </header>
-  {{{body}}}
+  <main class="container mx-auto p-6">
+    {{{body}}}
+  </main>
 </body>
 </html>
