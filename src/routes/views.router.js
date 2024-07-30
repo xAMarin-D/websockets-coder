@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { profile } from "../controllers/user.controllers.js";
+import { getCart } from "../controllers/cart.controllers.js";
 
 const router = Router();
 
@@ -25,5 +26,7 @@ router.get("/product/:id", async (req, res, next) => {
     next(error);
   }
 });
+
+router.get("/cart", getCart);
 
 export default router;

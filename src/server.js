@@ -30,16 +30,25 @@ const app = express();
 const httpServer = createServer(app);
 
 // CONF SESION & MONGO
-const storeConfig = {
-  store: MongoStore.create({
-    mongoUrl: process.env.MONGO_URL,
-    ttl: 180,
-  }),
-  secret: process.env.SECRET_KEY,
-  resave: false,
-  saveUninitialized: false,
-  cookie: { maxAge: 180000 },
-};
+app.use(
+  session({
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URL,
+      ttl: 180,
+    }),
+    secret: process.env.SECRET_KEY,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 180000,
+      httpOnly: true,
+      secure: false, // Cambiar a true si se usa HTTPS
+    },
+  })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 const productService = new ProductService();
 
@@ -64,9 +73,14 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(session(storeConfig));
 app.use(passport.initialize());
 app.use(passport.session());
+
+app.use((req, res, next) => {
+  console.log("Session User:", req.session.user);
+  console.log("Session Passport:", req.session.passport);
+  next();
+});
 app.use((req, res, next) => {
   res.set("Cache-Control", "no-store");
   next();
@@ -81,40 +95,39 @@ app.use("/api/sessions", sessionRouter);
 
 // VISTAS
 app.get("/", (req, res) => {
+  console.log("Session User at /:", req.session.user);
   res.redirect("/views/login");
 });
 
 app.get("/views/products", (req, res) => {
+  console.log("Session User at /views/products:", req.session.user);
   res.render("products");
 });
 
 app.get("/views/cart", (req, res) => {
+  console.log("Session User at /views/cart:", req.session.user);
   res.render("cart");
 });
 
 app.get("/views/login", (req, res) => {
+  console.log("Session User at /views/login:", req.session.user);
   res.render("login");
 });
 
 app.get("/views/register", (req, res) => {
+  console.log("Session User at /views/register:", req.session.user);
   res.render("register");
 });
 
 app.get("/views/profile", (req, res) => {
-  res.render("profile", { user: req.user });
-});
-
-app.get("/api/sessions/current", (req, res) => {
-  if (req.isAuthenticated()) {
-    res.json({
-      user: req.user,
-    });
-  } else {
-    res.status(401).json({ error: "Unauthorized" });
-  }
+  console.log("Session User at /views/profile:", req.session.user);
+  console.log("Session Passport User at /views/profile:", req.user);
+  res.render("profile", { user: req.session.user || req.user });
 });
 
 app.get("/product/:id", async (req, res, next) => {
+  console.log("Session User at /product/:id:", req.session.user);
+  console.log("Session Passport User at /product/:id:", req.user);
   try {
     const { id } = req.params;
     const product = await productService.getById(id);

@@ -1,15 +1,30 @@
-{{#extend "main"}}
-  {{#content "body"}}
-    <h1>Cart</h1>
-    {{#if products.length}}
-      <ul>
-        {{#each products}}
-          <li>{{this.title}} - {{this.quantity}}</li>
-        {{/each}}
-      </ul>
-      <a href="/checkout">Proceed to Checkout</a>
+{{!-- views/cart.handlebars --}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cart</title>
+  <link href="/css/output.css" rel="stylesheet">
+</head>
+<body>
+  <h1 class="text-2xl font-bold mb-4">Your Cart</h1>
+  <div class="container mx-auto">
+    {{#if cart}}
+      {{#each cart.products}}
+        <div class="flex justify-between items-center border-b py-2">
+          <div>
+            <p class="font-bold">{{this.productId.name}}</p>
+            <p>Quantity: {{this.quantity}}</p>
+          </div>
+          <div>
+            <p>${{this.productId.price}}</p>
+          </div>
+        </div>
+      {{/each}}
     {{else}}
-      <p>Your cart is empty</p>
+      <p>Your cart is empty.</p>
     {{/if}}
-  {{/content}}
-{{/extend}}
+  </div>
+</body>
+</html>

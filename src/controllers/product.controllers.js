@@ -71,7 +71,9 @@ export const getById = async (req, res, next) => {
     if (!product) {
       return res.status(404).json({ msg: "Product not found" });
     }
-    return product;
+    // En caso de que quieras usar esto como middleware
+    req.product = product;
+    return product; // Devuelve el producto encontrado
   } catch (error) {
     next(error);
   }

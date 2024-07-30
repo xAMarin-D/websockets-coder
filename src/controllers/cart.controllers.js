@@ -75,17 +75,15 @@ export const remove = async (req, res, next) => {
 
 export const addProductToCart = async (req, res, next) => {
   try {
+    if (!req.session.user || !req.session.user.cartId) {
+      return res.status(400).json({ msg: "Cart ID not found in session" });
+    }
+
     const { id } = req.params;
     const quantity = req.body.quantity || 1;
+    const cartId = req.session.user.cartId;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ msg: "Invalid Product ID" });
-    }
-
-    const cartId = req.session.cartId; // Assuming you store cartId in session
-    if (!cartId) {
-      return res.status(400).json({ msg: "No active cart" });
-    }
+    console.log("Cart ID:", cartId);
 
     const updatedCart = await cartService.addProductToCart(
       cartId,
@@ -94,7 +92,8 @@ export const addProductToCart = async (req, res, next) => {
     );
     res.json(updatedCart);
   } catch (error) {
-    next(error.message);
+    console.error("Error adding product to cart:", error);
+    next(error);
   }
 };
 
@@ -177,6 +176,18 @@ export const purchaseCart = async (req, res, next) => {
       await ticket.save();
       res.json({ msg: "Purchase successful", ticket });
     }
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getCart = async (req, res, next) => {
+  try {
+    const cart = await cartService.getById(req.session.user?.cartId);
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+    res.render("cart", { cart });
   } catch (error) {
     next(error);
   }

@@ -90,14 +90,20 @@ export default class CartDaoMongoDB {
       if (!cart) {
         throw new Error("Cart not found");
       }
-      const existingProductIndex = cart.products.findIndex(
+      const productIndex = cart.products.findIndex(
         (p) => p.productId.toString() === productId
       );
 
-      if (existingProductIndex >= 0) {
-        cart.products[existingProductIndex].quantity += quantity;
+      if (productIndex >= 0) {
+        cart.products[productIndex].quantity += quantity;
       } else {
-        cart.products.push({ productId, quantity });
+        const productDetails = await ProductModel.findById(productId); // Asegúrate de tener importado ProductModel
+        cart.products.push({
+          productId: productDetails._id,
+          quantity,
+          name: productDetails.title, // Añadir el nombre
+          price: productDetails.price, // Añadir el precio
+        });
       }
 
       const updatedCart = await cart.save();
@@ -106,7 +112,6 @@ export default class CartDaoMongoDB {
       throw new Error(error);
     }
   }
-
   async deleteProduct(cartId, productId) {
     try {
       const cart = await CartModel.findById(cartId);
