@@ -88,6 +88,10 @@ app.get("/views/products", (req, res) => {
   res.render("products");
 });
 
+app.get("/views/cart", (req, res) => {
+  res.render("cart");
+});
+
 app.get("/views/login", (req, res) => {
   res.render("login");
 });
