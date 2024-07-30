@@ -1,5 +1,7 @@
 import CartService from "../services/cart.service.js";
 import mongoose from "mongoose";
+import { TicketModel } from "../daos/mongodb/models/ticket.model.js";
+import { v4 as uuidv4 } from "uuid";
 
 const cartService = new CartService();
 
@@ -138,5 +140,44 @@ export const deleteAllProductsFromCart = async (req, res, next) => {
     res.json(updatedCart);
   } catch (error) {
     next(error.message);
+  }
+};
+
+export const purchaseCart = async (req, res, next) => {
+  try {
+    const { id: cartId } = req.params;
+    const cart = await cartService.getById(cartId);
+
+    if (!cart) return res.status(404).json({ error: "Cart not found" });
+
+    let totalAmount = 0;
+    let productsUnavailable = [];
+
+    for (let product of cart.products) {
+      const productData = await productService.getById(product.productId);
+      if (productData.stock >= product.quantity) {
+        totalAmount += productData.price * product.quantity;
+        productData.stock -= product.quantity;
+        await productService.update(product.productId, {
+          stock: productData.stock,
+        });
+      } else {
+        productsUnavailable.push(product.productId);
+      }
+    }
+
+    if (productsUnavailable.length > 0) {
+      res.json({ msg: "Some products are unavailable", productsUnavailable });
+    } else {
+      const ticket = new TicketModel({
+        code: uuidv4(),
+        amount: totalAmount,
+        purchaser: req.user.email,
+      });
+      await ticket.save();
+      res.json({ msg: "Purchase successful", ticket });
+    }
+  } catch (error) {
+    next(error);
   }
 };

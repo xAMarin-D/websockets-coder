@@ -1,0 +1,27 @@
+// src/repositories/productRepository.js
+import getDao from "../daos/mongodb/daoFactory.js"; // Ajustar la ruta si está en otro lugar
+const { productDao } = getDao(process.env.PERSISTENCE || "MONGO");
+
+class ProductRepository {
+  async getAll() {
+    return await productDao.getAll();
+  }
+
+  async getById(id) {
+    return await productDao.getById(id);
+  }
+
+  async create(data) {
+    return await productDao.create(data);
+  }
+
+  async update(id, data) {
+    return await productDao.update(id, data);
+  }
+
+  async delete(id) {
+    return await productDao.delete(id);
+  }
+}
+
+export default new ProductRepository();
