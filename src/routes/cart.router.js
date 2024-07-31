@@ -10,10 +10,7 @@ import {
   updateCart,
   updateProductQuantity,
   deleteAllProductsFromCart,
-  purchaseCart,
-  getCart,
 } from "../controllers/cart.controllers.js";
-import { isAuth } from "../middlewares/isAuth.js";
 
 const router = express.Router();
 
@@ -28,6 +25,5 @@ router.put("/:id", updateCart);
 router.put("/:id/products/:pid", updateProductQuantity);
 router.delete("/:id/products", deleteAllProductsFromCart);
 router.post("/add-product/:id", addProductToCart);
-router.post("/:id/purchase", isAuth, purchaseCart);
-router.get("/cart", getCart);
+
 export default router;

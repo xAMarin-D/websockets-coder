@@ -15,20 +15,15 @@ router.post("/register", register);
 router.post(
   "/login",
   passport.authenticate("login", {
+    successRedirect: "/views/profile",
     failureRedirect: "/views/login",
     failureFlash: true,
-  }),
-  (req, res) => {
-    if (req.user) {
-      req.session.user = { ...req.user.toObject(), cartId: req.user.cartId };
-      console.log("Session User After Login:", req.session.user);
-      res.redirect("/views/profile");
-    } else {
-      res.redirect("/views/login");
-    }
-  }
+  })
 );
 
+//login postman
+router.post("/loginp", login);
+router.post("/logoutp", logout);
 router.get(
   "/auth/github",
   passport.authenticate("github", { scope: ["user:email"] })

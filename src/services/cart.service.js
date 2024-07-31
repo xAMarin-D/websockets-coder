@@ -1,126 +1,86 @@
-import { CartModel } from "../daos/mongodb/models/cart.model.js";
-import { ProductModel } from "../daos/mongodb/models/product.model.js"; // Asegúrate de importar correctamente
+import CartDaoMongoDB from "../daos/mongodb/cart.dao.js";
+import mongoose from "mongoose";
 
 export default class CartService {
+  constructor() {
+    this.dao = new CartDaoMongoDB();
+  }
+
   async getAll() {
-    try {
-      return await CartModel.find({});
-    } catch (error) {
-      throw new Error(error.message);
-    }
+    return await this.dao.getAll();
   }
 
   async getById(id) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error("Invalid ObjectId");
+    }
+    return await this.dao.getById(id);
+  }
+
+  async create(obj) {
     try {
-      return await CartModel.findById(id).populate("products.productId");
+      return await this.dao.create(obj);
     } catch (error) {
-      throw new Error(error.message);
+      console.error("Error in CartService.create:", error);
+      throw error;
     }
   }
 
-  async create(data) {
-    try {
-      return await CartModel.create(data);
-    } catch (error) {
-      throw new Error(error.message);
+  async update(id, obj) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error("Invalid ObjectId");
     }
-  }
-
-  async update(id, data) {
-    try {
-      return await CartModel.findByIdAndUpdate(id, data, { new: true });
-    } catch (error) {
-      throw new Error(error.message);
-    }
+    return await this.dao.update(id, obj);
   }
 
   async delete(id) {
-    try {
-      return await CartModel.findByIdAndDelete(id);
-    } catch (error) {
-      throw new Error(error.message);
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error("Invalid ObjectId");
     }
+    return await this.dao.delete(id);
   }
 
   async addProductToCart(cartId, productId, quantity) {
-    try {
-      const cart = await CartModel.findById(cartId);
-      if (!cart) throw new Error("Cart not found");
-
-      const product = await ProductModel.findById(productId);
-      if (!product) throw new Error("Product not found");
-
-      const productIndex = cart.products.findIndex(
-        (p) => p.productId.toString() === productId
-      );
-
-      if (productIndex >= 0) {
-        cart.products[productIndex].quantity += quantity;
-      } else {
-        cart.products.push({ productId, quantity });
-      }
-
-      return await cart.save();
-    } catch (error) {
-      throw new Error(error.message);
+    if (
+      !mongoose.Types.ObjectId.isValid(cartId) ||
+      !mongoose.Types.ObjectId.isValid(productId)
+    ) {
+      throw new Error("Invalid ObjectId");
     }
+    return await this.dao.addProductToCart(cartId, productId, quantity);
   }
 
   async deleteProduct(cartId, productId) {
-    try {
-      const cart = await CartModel.findById(cartId);
-      if (!cart) throw new Error("Cart not found");
-
-      cart.products = cart.products.filter(
-        (p) => p.productId.toString() !== productId
-      );
-
-      return await cart.save();
-    } catch (error) {
-      throw new Error(error.message);
+    if (
+      !mongoose.Types.ObjectId.isValid(cartId) ||
+      !mongoose.Types.ObjectId.isValid(productId)
+    ) {
+      throw new Error("Invalid ObjectId");
     }
+    return await this.dao.deleteProduct(cartId, productId);
   }
 
   async updateCart(cartId, products) {
-    try {
-      const cart = await CartModel.findById(cartId);
-      if (!cart) throw new Error("Cart not found");
-
-      cart.products = products;
-      return await cart.save();
-    } catch (error) {
-      throw new Error(error.message);
+    if (!mongoose.Types.ObjectId.isValid(cartId)) {
+      throw new Error("Invalid ObjectId");
     }
+    return await this.dao.updateCart(cartId, products);
   }
 
   async updateProductQuantity(cartId, productId, quantity) {
-    try {
-      const cart = await CartModel.findById(cartId);
-      if (!cart) throw new Error("Cart not found");
-
-      const productIndex = cart.products.findIndex(
-        (p) => p.productId.toString() === productId
-      );
-
-      if (productIndex >= 0) {
-        cart.products[productIndex].quantity = quantity;
-      }
-
-      return await cart.save();
-    } catch (error) {
-      throw new Error(error.message);
+    if (
+      !mongoose.Types.ObjectId.isValid(cartId) ||
+      !mongoose.Types.ObjectId.isValid(productId)
+    ) {
+      throw new Error("Invalid ObjectId");
     }
+    return await this.dao.updateProductQuantity(cartId, productId, quantity);
   }
 
   async deleteAllProducts(cartId) {
-    try {
-      const cart = await CartModel.findById(cartId);
-      if (!cart) throw new Error("Cart not found");
-
-      cart.products = [];
-      return await cart.save();
-    } catch (error) {
-      throw new Error(error.message);
+    if (!mongoose.Types.ObjectId.isValid(cartId)) {
+      throw new Error("Invalid ObjectId");
     }
+    return await this.dao.deleteAllProducts(cartId);
   }
 }

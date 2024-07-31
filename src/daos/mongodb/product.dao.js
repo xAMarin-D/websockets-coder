@@ -19,9 +19,10 @@ export default class ProductDaoMongoDB {
 
   async getById(id) {
     try {
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        throw new Error("Invalid ObjectId");
-      }
+      // if (!mongoose.Types.ObjectId.isValid(id)) {
+      //   throw new Error("Invalid ObjectId");
+      // }
+      console.log(id);
       const response = await ProductModel.findById(id).lean();
       if (!response) {
         throw new Error("Product not found");

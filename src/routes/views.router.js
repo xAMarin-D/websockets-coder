@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { profile } from "../controllers/user.controllers.js";
-import { getCart } from "../controllers/cart.controllers.js";
 
 const router = Router();
 
@@ -13,20 +12,5 @@ router.get("/register", (req, res) => {
 });
 
 router.get("/profile", profile);
-
-router.get("/product/:id", async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const product = await productService.getById(id); // Assuming productService is correctly imported and used
-    if (!product) {
-      return res.status(404).send("Product not found");
-    }
-    res.render("product", { product });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.get("/cart", getCart);
 
 export default router;

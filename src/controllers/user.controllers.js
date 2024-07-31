@@ -9,63 +9,27 @@ export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const user = await userDao.login(email, password);
+
     if (!user) {
-      return res.status(401).json({ msg: "Unauthorized" });
+      return res.status(401).json({ msg: "No estás autorizado" });
     }
-
-    req.login(user, async (err) => {
-      if (err) {
-        return next(err);
-      }
-
-      let userCartId = user.cartId;
-      if (!userCartId) {
-        const newCart = await cartDao.create(); // Crear un carrito si no existe
-        userCartId = newCart._id;
-        // Guardar el nuevo cartId en el usuario, si no estaba previamente asignado
-        await userDao.update(user._id, { cartId: newCart._id });
-      }
-
-      req.session.user = { ...user.toObject(), cartId: userCartId };
-      console.log("Session User After Login:", req.session.user);
-
-      res.redirect("/views/profile");
-    });
+    req.session.user = user;
+    res.send("Usuario logeado correctamente");
+    // req.login(user, (err) => {
+    //   if (err) {
+    //     return next(err);
+    //   }
+    //   req.session.user = user; // Almacenar los datos del usuario en la sesión
+    //   //res.redirect("/views/profile");
+    // });
+    console.log(req.session.user);
   } catch (error) {
     next(error);
   }
 };
 
-export const register = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    let cart = await cartDao.create();
-    let role = "user";
-
-    if (email === "adminCoder@coder.com" && password === "adminCoder123") {
-      role = "admin";
-    }
-
-    const user = await userDao.register({
-      ...req.body,
-      role: role,
-      cartId: cart._id,
-    });
-
-    if (!user) {
-      res.status(401).json({ msg: "User exists!" });
-    } else {
-      req.session.user = { ...user.toObject(), cartId: cart._id }; // Asegúrate de usar `toObject()`
-      res.redirect("/views/login");
-    }
-  } catch (error) {
-    console.error("Error registering user:", error);
-    res.status(500).json({ msg: error.message || "Internal Server Error" });
-  }
-};
-
 export const profile = (req, res) => {
-  console.log("User in session:", req.session.user);
+  console.log("User in session:", req.session.user); // LogS para verificar los datos del usuario
   console.log("User from passport:", req.user);
 
   if (
@@ -77,6 +41,37 @@ export const profile = (req, res) => {
 
   const user = req.session.user || req.user;
   res.render("profile", { user });
+};
+
+export const register = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    let cart = await cartDao.createCart();
+    if (email === "adminCoder@coder.com" && password === "adminCoder123") {
+      const user = await userDao.register({
+        ...req.body,
+        role: "admin",
+        cartId: cart._id, // Asignar el ID del carrito al usuario
+      });
+      if (!user) res.status(401).json({ msg: "user exist!" });
+      else {
+        req.session.user = user; // Almacenar los datos del usuario en la sesión
+        res.redirect("/views/login");
+      }
+    } else {
+      const user = await userDao.register({
+        ...req.body,
+        cartId: cart._id, // Asignar el ID del carrito al usuario
+      });
+      if (!user) res.status(401).json({ msg: "user exist!" });
+      else {
+        req.session.user = user; // Almacenar los datos del usuario en la sesión
+        res.redirect("/views/login");
+      }
+    }
+  } catch (error) {
+    throw new Error(error);
+  }
 };
 
 export const githubResponse = async (req, res) => {
@@ -93,8 +88,8 @@ export const logout = (req, res) => {
 };
 
 export const getCurrentSession = (req, res) => {
-  if (req.session.user || req.user) {
-    return res.json({ user: req.session.user || req.user });
+  if (req.session.user) {
+    return res.json({ user: req.session.user });
   } else {
     return res.status(401).json({ msg: "No user session found" });
   }

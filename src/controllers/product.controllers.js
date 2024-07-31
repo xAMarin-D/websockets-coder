@@ -71,9 +71,7 @@ export const getById = async (req, res, next) => {
     if (!product) {
       return res.status(404).json({ msg: "Product not found" });
     }
-    // En caso de que quieras usar esto como middleware
-    req.product = product;
-    return product; // Devuelve el producto encontrado
+    res.json(product);
   } catch (error) {
     next(error);
   }
@@ -81,9 +79,32 @@ export const getById = async (req, res, next) => {
 
 export const create = async (req, res, next) => {
   try {
-    const newProd = await productService.create(req.body);
-    if (!newProd) res.status(404).json({ msg: "Error creating product" });
-    else res.json(newProd);
+    console.log(req.session.user);
+    if (req.session.user.role === "admin") {
+      const newProd = await productService.create(req.body);
+      if (!newProd) res.status(404).json({ msg: "Error creating product" });
+      else res.json(newProd);
+    } else {
+      res.send("No Eres Admin");
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const remove = async (req, res, next) => {
+  try {
+    if (req.session.user.role === "admin") {
+      const { id } = req.params;
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ msg: "Invalid ObjectId" });
+      }
+      const prodDel = await productService.delete(id);
+      if (!prodDel) res.status(404).json({ msg: "Error removing product" });
+      else res.json(prodDel);
+    } else {
+      res.send("No Eres Admin");
+    }
   } catch (error) {
     next(error);
   }
@@ -103,15 +124,17 @@ export const update = async (req, res, next) => {
   }
 };
 
-export const remove = async (req, res, next) => {
+export const renderProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ msg: "Invalid ObjectId" });
     }
-    const prodDel = await productService.delete(id);
-    if (!prodDel) res.status(404).json({ msg: "Error removing product" });
-    else res.json(prodDel);
+    const product = await productService.getById(id);
+    if (!product) {
+      return res.status(404).json({ msg: "Product not found" });
+    }
+    res.render("product", { product });
   } catch (error) {
     next(error);
   }

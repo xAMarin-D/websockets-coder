@@ -1,7 +1,5 @@
 import CartService from "../services/cart.service.js";
 import mongoose from "mongoose";
-import { TicketModel } from "../daos/mongodb/models/ticket.model.js";
-import { v4 as uuidv4 } from "uuid";
 
 const cartService = new CartService();
 
@@ -75,25 +73,28 @@ export const remove = async (req, res, next) => {
 
 export const addProductToCart = async (req, res, next) => {
   try {
-    if (!req.session.user || !req.session.user.cartId) {
-      return res.status(400).json({ msg: "Cart ID not found in session" });
+    const { productId } = req.params;
+    const { quantity } = req.params;
+    const quantityInt = parseInt(quantity, 10) || 1;
+
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ msg: "Invalid Product ID" });
     }
 
-    const { id } = req.params;
-    const quantity = req.body.quantity || 1;
     const cartId = req.session.user.cartId;
 
-    console.log("Cart ID:", cartId);
+    if (!cartId) {
+      return res.status(400).json({ msg: "No active cart" });
+    }
 
     const updatedCart = await cartService.addProductToCart(
       cartId,
-      id,
-      quantity
+      productId,
+      quantityInt
     );
     res.json(updatedCart);
   } catch (error) {
-    console.error("Error adding product to cart:", error);
-    next(error);
+    next(error.message);
   }
 };
 
@@ -120,11 +121,12 @@ export const updateCart = async (req, res, next) => {
 export const updateProductQuantity = async (req, res, next) => {
   try {
     const { id, pid } = req.params;
-    const { quantity } = req.body;
+    const { quantity } = req.params;
+    const quantityInt = parseInt(quantity, 10) || 1;
     const updatedCart = await cartService.updateProductQuantity(
       id,
       pid,
-      quantity
+      quantityInt
     );
     res.json(updatedCart);
   } catch (error) {
@@ -139,56 +141,5 @@ export const deleteAllProductsFromCart = async (req, res, next) => {
     res.json(updatedCart);
   } catch (error) {
     next(error.message);
-  }
-};
-
-export const purchaseCart = async (req, res, next) => {
-  try {
-    const { id: cartId } = req.params;
-    const cart = await cartService.getById(cartId);
-
-    if (!cart) return res.status(404).json({ error: "Cart not found" });
-
-    let totalAmount = 0;
-    let productsUnavailable = [];
-
-    for (let product of cart.products) {
-      const productData = await productService.getById(product.productId);
-      if (productData.stock >= product.quantity) {
-        totalAmount += productData.price * product.quantity;
-        productData.stock -= product.quantity;
-        await productService.update(product.productId, {
-          stock: productData.stock,
-        });
-      } else {
-        productsUnavailable.push(product.productId);
-      }
-    }
-
-    if (productsUnavailable.length > 0) {
-      res.json({ msg: "Some products are unavailable", productsUnavailable });
-    } else {
-      const ticket = new TicketModel({
-        code: uuidv4(),
-        amount: totalAmount,
-        purchaser: req.user.email,
-      });
-      await ticket.save();
-      res.json({ msg: "Purchase successful", ticket });
-    }
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getCart = async (req, res, next) => {
-  try {
-    const cart = await cartService.getById(req.session.user?.cartId);
-    if (!cart) {
-      return res.status(404).json({ message: "Cart not found" });
-    }
-    res.render("cart", { cart });
-  } catch (error) {
-    next(error);
   }
 };
