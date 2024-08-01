@@ -21,6 +21,7 @@ import viewsRouter from "./routes/views.router.js";
 import sessionRouter from "./routes/session.router.js";
 import ticketRouter from "./routes/ticket.router.js";
 import ProductService from "./services/product.services.js";
+import emailRouter from "./routes/email.router.js";
 //import { MessageModel } from "./daos/mongodb/models/chat.model.js";
 
 //INIT CONF
@@ -70,13 +71,24 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use(
+  "/api",
+  (req, res, next) => {
+    console.log(`API route accessed: ${req.originalUrl}`);
+    next();
+  },
+  emailRouter
+);
+
 //RUTAS
+app.use("/api", emailRouter);
 app.use("/products", productRouter);
 app.use("/carts", cartRouter);
 app.use("/users", userRouter);
 app.use("/views", viewsRouter);
 app.use("/api/sessions", sessionRouter);
 app.use("/ticket", ticketRouter);
+
 //VISTAS
 app.get("/", (req, res) => {
   res.redirect("/views/login");

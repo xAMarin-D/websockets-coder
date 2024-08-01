@@ -2,6 +2,7 @@ import Services from "./class.services.js";
 import CartServices from "./cart.service.js";
 import ProductService from "./product.services.js";
 import TicketDaoMongo from "../daos/mongodb/ticket.dao.js";
+import { sendGmailWithTicket } from "../controllers/email.controller.js"; // Importa el controlador del email
 
 const ticketDao = new TicketDaoMongo();
 const productService = new ProductService();
@@ -14,21 +15,26 @@ export default class TicketService extends Services {
 
   async generateTicket(user) {
     try {
-      //console.log(user.cartId);
       const cart = await cartService.getById(user.cartId);
       if (!cart) return null;
-      //console.log(cart);
+
       let amountAcc = 0;
+      const products = [];
+
       if (cart.products.length > 0) {
         for (const prodInCart of cart.products) {
-          //   const idProd = prodInCart._id._id.toHexString();
           const idProd = prodInCart.productId;
-          console.log(prodInCart.productId);
           const prodDB = await productService.getById(idProd);
 
           if (prodInCart.quantity <= prodDB.stock) {
             const amount = prodInCart.quantity * prodDB.price;
             amountAcc += amount;
+            products.push({
+              name: prodDB.title,
+              quantity: prodInCart.quantity,
+              price: prodDB.price,
+              total: amount,
+            });
           } else return null;
         }
       }
@@ -38,9 +44,13 @@ export default class TicketService extends Services {
         purchase_datetime: new Date().toLocaleString(),
         amount: amountAcc,
         purchaser: user.email,
+        products: products,
       });
 
       await cartService.deleteAllProducts(user.cartId);
+
+      // Envía el correo con la información del ticket
+      await sendGmailWithTicket(user.email, ticket);
 
       return ticket;
     } catch (error) {
