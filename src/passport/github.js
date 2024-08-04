@@ -19,7 +19,7 @@ const registerOrLogin = async (accessToken, refreshToken, profile, done) => {
         last_name: "Not provided",
         email: profile.emails[0].value,
         githubId: profile.id,
-        password: "", // No se usará para usuarios de GitHub, tampoco se recibe correo
+        password: "",
       });
     }
     return done(null, user);

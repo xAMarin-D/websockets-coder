@@ -28,9 +28,7 @@ export const mailOptionsEthereal = {
   from: process.env.EMAIL,
   to: process.env.EMAIL,
   subject: "Bienvenido/a",
-  // text: 'Este es el texto del email'
-  // html: "<h1>Bienvenido a Coderhouse!</h1>"
-  html: template("Leandro"),
+  html: template("Alejandro"),
 };
 
 /* ------------------------------------ - ----------------------------------- */
@@ -51,14 +49,12 @@ export const mailOptionsEtherealHbs = {
   from: process.env.EMAIL,
   to: process.env.EMAIL,
   subject: "Bienvenido/a",
-  template: "email", //nombre del archivo handlebars,
+  template: "email",
   context: {
     title: "Este es un email enviado con una plantilla de handlebars",
     text: "bla bla bla ......",
   },
 };
-
-/* -------------------------------- SENDGRID -------------------------------- */
 
 import sgMail from "@sendgrid/mail";
 

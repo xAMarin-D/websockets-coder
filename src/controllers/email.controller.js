@@ -1,4 +1,3 @@
-// Importaciones y configuraciones necesarias
 import sgMail, {
   transporter,
   transporterGmail,
@@ -14,7 +13,7 @@ export const sendGmailWithTicket = async (dest, ticket) => {
       from: process.env.EMAIL_GMAIL,
       to: dest,
       subject: "Resumen de tu compra",
-      html: template(ticket), // Pasa el ticket al template
+      html: template(ticket),
       attachments: [
         {
           path: path.resolve("./src/services/texto.txt"),
@@ -29,5 +28,3 @@ export const sendGmailWithTicket = async (dest, ticket) => {
     console.log(error);
   }
 };
-
-// Otros métodos si los hay, asegúrate de exportarlos también

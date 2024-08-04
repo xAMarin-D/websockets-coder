@@ -1,6 +1,4 @@
-// Verifica que estás pasando un objeto 'ticket' con una propiedad 'products' que sea un array
 export const template = (ticket) => {
-  // Comprueba que ticket.products exista y sea un array
   const productsList = Array.isArray(ticket.products)
     ? ticket.products
         .map(

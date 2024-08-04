@@ -1,5 +1,4 @@
-// src/repositories/productRepository.js
-import getDao from "../daos/mongodb/daoFactory.js"; // Ajustar la ruta si está en otro lugar
+import getDao from "../daos/mongodb/daoFactory.js";
 const { productDao } = getDao(process.env.PERSISTENCE || "MONGO");
 
 class ProductRepository {

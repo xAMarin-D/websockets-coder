@@ -29,7 +29,7 @@ export const login = async (req, res, next) => {
 };
 
 export const profile = (req, res) => {
-  console.log("User in session:", req.session.user); // LogS para verificar los datos del usuario
+  console.log("User in session:", req.session.user);
   console.log("User from passport:", req.user);
 
   if (
@@ -47,7 +47,7 @@ export const register = async (req, res) => {
   try {
     const { email, password } = req.body;
     let cart = await cartDao.createCart();
-    if (email === "adminCoder@coder.com" && password === "adminCoder123") {
+    if (email === process.env.ADMIN_USR && password === process.env.ADMIN_PWD) {
       const user = await userDao.register({
         ...req.body,
         role: "admin",
