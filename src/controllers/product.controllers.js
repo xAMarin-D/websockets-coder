@@ -1,6 +1,8 @@
 import ProductService from "../services/product.services.js";
 import mongoose from "mongoose";
+import { HttpResponse } from "../utils/http.response.js";
 
+const httpResponse = new HttpResponse();
 const productService = new ProductService();
 
 export const getAll = async (req, res, next) => {
@@ -85,7 +87,7 @@ export const create = async (req, res, next) => {
       if (!newProd) res.status(404).json({ msg: "Error creating product" });
       else res.json(newProd);
     } else {
-      res.send("No Eres Admin");
+      return httpResponse.Unauthorized(res);
     }
   } catch (error) {
     next(error);

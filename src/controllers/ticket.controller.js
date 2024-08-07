@@ -1,6 +1,8 @@
 import Controllers from "./class.controller.js";
 import TicketService from "../services/ticket.service.js";
-import { createResponse } from "../utils.js";
+import { HttpResponse } from "../utils/http.response.js";
+
+const httpResponse = new HttpResponse();
 const ticketService = new TicketService();
 
 export default class TicketController extends Controllers {
@@ -11,9 +13,10 @@ export default class TicketController extends Controllers {
   async generateTicket(req, res, next) {
     try {
       const user = req.session.user;
+
       const ticket = await ticketService.generateTicket(user);
-      if (!ticket) createResponse(res, 404, "Error generate ticket");
-      else createResponse(res, 200, ticket);
+      if (!ticket) return httpResponse.NotFound(res);
+      else return httpResponse.Ok(res, data, ticket);
     } catch (error) {
       next(error);
     }

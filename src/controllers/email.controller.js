@@ -1,7 +1,4 @@
-import sgMail, {
-  transporter,
-  transporterGmail,
-} from "../services/email.service.js";
+import { transporterGmail } from "../services/email.service.js";
 import "dotenv/config";
 import { template } from "../services/template.js";
 import path from "path";
