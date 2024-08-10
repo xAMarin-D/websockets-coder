@@ -13,6 +13,7 @@ import session from "express-session";
 import MongoStore from "connect-mongo";
 import passport from "passport";
 import { errorHandler } from "./middlewares/errorHandler.js";
+import { logger } from "./utils/logger.js";
 
 import productRouter from "./routes/product.router.js";
 import cartRouter from "./routes/cart.router.js";
@@ -127,6 +128,16 @@ app.get("/api/sessions/current", (req, res) => {
   }
 });
 
+app.get("/loggerTest", (req, res) => {
+  logger.debug("Este es un mensaje de depuración");
+  logger.http("Este es un mensaje http");
+  logger.info("Este es un mensaje informativo");
+  logger.warning("Este es un mensaje de advertencia");
+  logger.error("Este es un mensaje de error");
+  logger.fatal("Este es un mensaje fatal");
+  res.send("¡Los logs han sido enviados!");
+});
+
 //CONENCTION CHAT (EN DESUSO)
 /* 
 const io = new SocketIOServer(httpServer);
@@ -160,4 +171,5 @@ if (process.env.PERSISTENCE === "MONGO") {
 const PORT = 8080;
 httpServer.listen(PORT, () => {
   console.log(`Server ok en port ${PORT}`);
+  logger.info(`Server ok en port ${PORT}`);
 });
