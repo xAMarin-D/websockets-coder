@@ -1,6 +1,7 @@
 import UserDao from "../daos/mongodb/user.dao.js";
 import { UserModel } from "../daos/mongodb/models/user.model.js";
 import CartDao from "../daos/mongodb/cart.dao.js";
+import { logger } from "../utils/logger.js";
 
 const userDao = new UserDao(UserModel);
 const cartDao = new CartDao();
@@ -22,15 +23,17 @@ export const login = async (req, res, next) => {
     //   req.session.user = user; // Almacenar los datos del usuario en la sesión
     //   //res.redirect("/views/profile");
     // });
-    console.log(req.session.user);
+    logger.info(
+      `Detalles del usuario en la sesión: ${JSON.stringify(req.session.user)}`
+    );
   } catch (error) {
     next(error);
   }
 };
 
 export const profile = (req, res) => {
-  console.log("User in session:", req.session.user);
-  console.log("User from passport:", req.user);
+  logger.info(`Usuario en la sesión: ${JSON.stringify(req.session.user)}`);
+  logger.info(`Usuario de passport: ${JSON.stringify(req.user)}`);
 
   if (
     !req.session.user &&

@@ -1,5 +1,6 @@
 import CartService from "../services/cart.service.js";
 import mongoose from "mongoose";
+import { logger } from "../utils/logger.js";
 
 const cartService = new CartService();
 
@@ -8,7 +9,10 @@ export const getAll = async (req, res, next) => {
     const response = await cartService.getAll();
     res.json(response);
   } catch (error) {
-    console.error("Error getting carts:", error);
+    console.error("Error obteniendo el carrito por ID:", error);
+    logger.error(`Error obteniendo el carrito por ID: ${error.message}`, {
+      error,
+    });
     next(error.message);
   }
 };
@@ -20,10 +24,13 @@ export const getById = async (req, res, next) => {
       return res.status(400).json({ msg: "Invalid ObjectId" });
     }
     const cart = await cartService.getById(id);
-    if (!cart) res.status(404).json({ msg: "Cart not found" });
+    if (!cart) res.status(404).json({ msg: "Carro no encontrado" });
     else res.json(cart);
   } catch (error) {
-    console.error("Error getting cart by ID:", error);
+    console.error("Error obteniendo el carrito por ID:", error);
+    logger.error(`Error obteniendo el carrito por ID: ${error.message}`, {
+      error,
+    });
     next(error.message);
   }
 };
@@ -31,6 +38,7 @@ export const getById = async (req, res, next) => {
 export const create = async (req, res, next) => {
   try {
     console.log("Request body:", req.body);
+    logger.info(`Request body: ${JSON.stringify(req.body)}`);
     const newCart = await cartService.create(req.body);
     if (!newCart) {
       res.status(404).json({ msg: "Error creating cart" });
@@ -38,7 +46,8 @@ export const create = async (req, res, next) => {
       res.status(201).json(newCart);
     }
   } catch (error) {
-    console.error("Error creating cart:", error);
+    console.error("Error creando el carrito:", error);
+    logger.error(`Error creando el carrito: ${error.message}`, { error });
     res.status(500).json({ msg: error.message || "Internal Server Error" });
   }
 };
