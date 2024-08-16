@@ -15,16 +15,28 @@ export default class TicketService extends Services {
 
   async generateTicket(user) {
     try {
-      const cart = await cartService.getById(user.cartId);
-      if (!cart) return null;
+      // Verifica que el usuario tenga un cartId
+      if (!user.cartId) {
+        throw new Error("No se encontró un carrito para el usuario.");
+      }
+
+      const cart = await cartService.getById(user.cartId); // Aquí debe usar el cartId del usuario
+      if (!cart) {
+        throw new Error("No se encontró el carrito.");
+      }
 
       let amountAcc = 0;
       const products = [];
 
+      // Asegúrate de que estás iterando sobre los productos del carrito y no confundiendo el ID
       if (cart.products.length > 0) {
         for (const prodInCart of cart.products) {
-          const idProd = prodInCart.productId;
-          const prodDB = await productService.getById(idProd);
+          const idProd = prodInCart.productId; // Esto debe ser el ID del producto en el carrito
+          const prodDB = await productService.getById(idProd); // Consulta la base de datos de productos
+
+          if (!prodDB) {
+            throw new Error(`Producto con ID ${idProd} no encontrado.`);
+          }
 
           if (prodInCart.quantity <= prodDB.stock) {
             const amount = prodInCart.quantity * prodDB.price;
@@ -35,7 +47,11 @@ export default class TicketService extends Services {
               price: prodDB.price,
               total: amount,
             });
-          } else return null;
+          } else {
+            throw new Error(
+              `No hay suficiente stock para el producto con ID ${idProd}.`
+            );
+          }
         }
       }
 
@@ -47,10 +63,8 @@ export default class TicketService extends Services {
         products: products,
       });
 
-      await cartService.deleteAllProducts(user.cartId);
-
-      // Envía el correo con la información del ticket
-      await sendGmailWithTicket(user.email, ticket);
+      await cartService.deleteAllProducts(user.cartId); // Limpiar el carrito después de la compra
+      await sendGmailWithTicket(user.email, ticket); // Envía el ticket por correo
 
       return ticket;
     } catch (error) {

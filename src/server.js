@@ -91,7 +91,7 @@ app.use("/users", userRouter);
 app.use("/views", viewsRouter);
 app.use("/api/sessions", sessionRouter);
 app.use("/ticket", ticketRouter);
-
+app.use("/api/users", userRouter);
 //VISTAS
 app.get("/", (req, res) => {
   res.redirect("/views/login");

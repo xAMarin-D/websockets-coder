@@ -82,12 +82,29 @@ export const getById = async (req, res, next) => {
 export const create = async (req, res, next) => {
   try {
     console.log(req.session.user);
-    if (req.session.user.role === "admin") {
-      const newProd = await productService.create(req.body);
-      if (!newProd) res.status(404).json({ msg: "Error creating product" });
-      else res.json(newProd);
+
+    // Verificar si el usuario es admin o premium
+    if (
+      req.session.user.role === "admin" ||
+      req.session.user.role === "premium"
+    ) {
+      // Asignar el owner del producto
+      const productData = {
+        ...req.body,
+        owner: req.session.user.email || "admin", // Establecer el owner como el email del usuario o "admin" por defecto
+      };
+
+      const newProd = await productService.create(productData);
+
+      if (!newProd) {
+        res.status(404).json({ msg: "Error creating product" });
+      } else {
+        res.json(newProd);
+      }
     } else {
-      return httpResponse.Unauthorized(res);
+      return res
+        .status(403)
+        .json({ msg: "No tienes permisos para crear productos" });
     }
   } catch (error) {
     next(error);
@@ -96,19 +113,68 @@ export const create = async (req, res, next) => {
 
 export const remove = async (req, res, next) => {
   try {
-    if (req.session.user.role === "admin") {
-      const { id } = req.params;
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ msg: "Invalid ObjectId" });
-      }
-      const prodDel = await productService.delete(id);
-      if (!prodDel) res.status(404).json({ msg: "Error removing product" });
-      else res.json(prodDel);
-    } else {
-      res.send("No Eres Admin");
+    const user = req.session?.user;
+
+    // Verificar si el usuario está en sesión
+    if (!user) {
+      return res.status(401).json({ msg: "Usuario no autenticado" });
     }
+
+    const { id } = req.params;
+
+    // Validar que el ID del producto sea válido
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ msg: "ID de producto inválido" });
+    }
+
+    const product = await productService.getById(id);
+
+    // Verificar si el producto existe
+    if (!product) {
+      return res.status(404).json({ msg: "Producto no encontrado" });
+    }
+
+    // Si el usuario es admin, puede eliminar cualquier producto
+    if (user.role === "admin") {
+      const prodDel = await productService.delete(id);
+      if (!prodDel) {
+        return res.status(500).json({ msg: "Error al eliminar producto" });
+      }
+      return res.json({
+        msg: "Producto eliminado exitosamente",
+        product: prodDel,
+      });
+    }
+
+    // Si el usuario es premium, solo puede eliminar sus propios productos
+    if (user.role === "premium") {
+      if (product.owner === user.email) {
+        const prodDel = await productService.delete(id);
+        if (!prodDel) {
+          return res.status(500).json({ msg: "Error al eliminar producto" });
+        }
+        return res.json({
+          msg: "Producto eliminado exitosamente",
+          product: prodDel,
+        });
+      } else {
+        return res
+          .status(403)
+          .json({ msg: "No tienes permiso para eliminar este producto" });
+      }
+    }
+
+    // Si el usuario no es admin ni premium
+    return res
+      .status(403)
+      .json({
+        msg: "No tienes los permisos necesarios para eliminar productos",
+      });
   } catch (error) {
-    next(error);
+    console.error("Error eliminando producto:", error);
+    res
+      .status(500)
+      .json({ msg: "Error interno del servidor", error: error.message });
   }
 };
 

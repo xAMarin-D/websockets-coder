@@ -16,7 +16,7 @@ export default class TicketController extends Controllers {
 
       const ticket = await ticketService.generateTicket(user);
       if (!ticket) return httpResponse.NotFound(res);
-      else return httpResponse.Ok(res, data, ticket);
+      else return httpResponse.Ok(res, ticket);
     } catch (error) {
       next(error);
     }

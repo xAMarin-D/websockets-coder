@@ -1,8 +1,10 @@
 import CartService from "../services/cart.service.js";
 import mongoose from "mongoose";
 import { logger } from "../utils/logger.js";
+import ProductService from "../services/product.services.js";
 
 const cartService = new CartService();
+const productService = new ProductService();
 
 export const getAll = async (req, res, next) => {
   try {
@@ -86,24 +88,49 @@ export const addProductToCart = async (req, res, next) => {
     const { quantity } = req.params;
     const quantityInt = parseInt(quantity, 10) || 1;
 
+    const user = req.session.user;
+
+    // Verificar si el ID del producto es válido
     if (!mongoose.Types.ObjectId.isValid(productId)) {
-      return res.status(400).json({ msg: "Invalid Product ID" });
+      return res.status(400).json({ msg: "ID de producto inválido" });
     }
 
-    const cartId = req.session.user.cartId;
+    // Verificar si el usuario está autenticado
+    if (!user) {
+      return httpResponse.Unauthorized(res, "Usuario no autenticado");
+    }
 
+    // Obtener el carrito del usuario
+    const cartId = user.cartId;
     if (!cartId) {
-      return res.status(400).json({ msg: "No active cart" });
+      return res.status(400).json({ msg: "No hay un carrito activo" });
     }
 
+    // Obtener el producto que se va a agregar al carrito
+    const product = await productService.getById(productId);
+    if (!product) {
+      return res.status(404).json({ msg: "Producto no encontrado" });
+    }
+
+    // Si el usuario es premium, no puede agregar productos que él mismo creó
+    if (user.role === "premium" && product.owner === user.email) {
+      return res.status(403).json({
+        msg: "No puedes agregar productos que tú has creado a tu carrito",
+      });
+    }
+
+    // Agregar el producto al carrito
     const updatedCart = await cartService.addProductToCart(
       cartId,
       productId,
       quantityInt
     );
+    console.log(cartId);
+
     res.json(updatedCart);
   } catch (error) {
-    next(error.message);
+    console.error("Error en addProductToCart:", error);
+    next(error);
   }
 };
 
