@@ -2,7 +2,11 @@ import UserDao from "../daos/mongodb/user.dao.js";
 import { UserModel } from "../daos/mongodb/models/user.model.js";
 import CartDao from "../daos/mongodb/cart.dao.js";
 import { logger } from "../utils/logger.js";
+import { sendPasswordRecoveryEmail } from "../services/email.service.js";
+import { HttpResponse } from "../utils/http.response.js";
+import crypto from "crypto";
 
+const httpResponse = new HttpResponse();
 const userDao = new UserDao(UserModel);
 const cartDao = new CartDao();
 
@@ -95,5 +99,78 @@ export const getCurrentSession = (req, res) => {
     return res.json({ user: req.session.user });
   } else {
     return res.status(401).json({ msg: "No user session found" });
+  }
+};
+
+// Solicitar restablecimiento de contraseña
+export const requestPasswordReset = async (req, res, next) => {
+  try {
+    const user = req.session.user;
+    if (!user) {
+      return httpResponse.Unauthorized(
+        res,
+        "Debes estar logueado para solicitar la recuperación de contraseña."
+      );
+    }
+
+    // Generar un token de recuperación
+    const resetToken = crypto.randomBytes(20).toString("hex");
+    const tokenExpiration = Date.now() + 3600000; // Expira en 1 hora
+
+    // Guardar el token y su expiración en la base de datos del usuario
+    await UserModel.updateOne(
+      { _id: user._id },
+      {
+        resetPasswordToken: resetToken,
+        resetPasswordExpires: tokenExpiration,
+      }
+    );
+
+    // Enviar correo con el enlace de restablecimiento
+    const resetLink = `http://localhost:8080/api/users/reset-password/${resetToken}`;
+    await sendPasswordRecoveryEmail(user.email, resetLink);
+
+    httpResponse.Ok(res, "Correo de recuperación enviado.");
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Restablecer la contraseña
+export const resetPassword = async (req, res, next) => {
+  try {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+
+    // Buscar al usuario con el token y verificar si no ha expirado
+    const user = await UserModel.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return httpResponse.BadRequest(res, "Token inválido o expirado.");
+    }
+
+    // Verificar que la nueva contraseña no sea igual a la anterior
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      return httpResponse.BadRequest(
+        res,
+        "No puedes usar la misma contraseña."
+      );
+    }
+
+    // Encriptar la nueva contraseña y actualizar los datos del usuario
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+
+    await user.save();
+
+    httpResponse.Ok(res, "Contraseña restablecida exitosamente.");
+  } catch (error) {
+    next(error);
   }
 };

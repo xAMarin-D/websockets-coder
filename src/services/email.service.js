@@ -60,4 +60,24 @@ import sgMail from "@sendgrid/mail";
 
 sgMail.setApiKey(process.env.SENDGRID_APIKEY);
 
+export const sendPasswordRecoveryEmail = async (email, resetLink) => {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_GMAIL,
+      to: email,
+      subject: "Recuperación de contraseña",
+      html: `
+        <p>Haga clic en el siguiente enlace para restablecer su contraseña:</p>
+        <a href="${resetLink}">Restablecer contraseña</a>
+        <p>Este enlace expirará en 1 hora.</p>
+      `,
+    };
+
+    await transporterGmail.sendMail(mailOptions);
+    console.log(`Correo de recuperación enviado a: ${email}`);
+  } catch (error) {
+    console.error("Error enviando el correo de recuperación:", error);
+  }
+};
+
 export default sgMail;

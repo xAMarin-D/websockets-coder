@@ -7,7 +7,10 @@ import {
   profile,
   githubResponse,
   getCurrentSession,
+  requestPasswordReset,
+  resetPassword,
 } from "../controllers/user.controllers.js";
+import { isAuth } from "../middlewares/isAuth.js";
 import { UserModel } from "../daos/mongodb/models/user.model.js";
 
 const router = Router();
@@ -67,5 +70,11 @@ router.put("/premium/:uid", async (req, res, next) => {
     next(error);
   }
 });
+
+// Solicitar res(debe estar logueado)
+router.post("/request-password-reset", isAuth, requestPasswordReset);
+
+// Restablecer pass
+router.post("/reset-password/:token", resetPassword);
 
 export default router;

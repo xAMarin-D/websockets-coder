@@ -1,4 +1,9 @@
 export const isAuth = (req, res, next) => {
-  if (req.isAuthenticated()) return next();
-  res.status(401).send({ msg: "Unauthorized" });
+  if (req.session.user) {
+    next();
+  } else {
+    return res
+      .status(401)
+      .json({ msg: "Debes estar logueado para acceder a esta ruta." });
+  }
 };
