@@ -5,6 +5,7 @@ import { logger } from "../utils/logger.js";
 import { sendPasswordRecoveryEmail } from "../services/email.service.js";
 import { HttpResponse } from "../utils/http.response.js";
 import crypto from "crypto";
+import bcrypt from "bcrypt";
 
 const httpResponse = new HttpResponse();
 const userDao = new UserDao(UserModel);
@@ -60,7 +61,7 @@ export const register = async (req, res) => {
         role: "admin",
         cartId: cart._id, // Asignar el ID del carrito al usuario
       });
-      if (!user) res.status(401).json({ msg: "user exist!" });
+      if (!user) res.status(401).json({ msg: "Usuario existe!" });
       else {
         req.session.user = user; // Almacenar los datos del usuario en la sesión
         res.redirect("/views/login");
@@ -70,7 +71,7 @@ export const register = async (req, res) => {
         ...req.body,
         cartId: cart._id, // Asignar el ID del carrito al usuario
       });
-      if (!user) res.status(401).json({ msg: "user exist!" });
+      if (!user) res.status(401).json({ msg: "Usuario existe!" });
       else {
         req.session.user = user; // Almacenar los datos del usuario en la sesión
         res.redirect("/views/login");
@@ -88,7 +89,7 @@ export const githubResponse = async (req, res) => {
 export const logout = (req, res) => {
   req.session.destroy((err) => {
     if (err) {
-      return res.status(500).send("Could not log out.");
+      return res.status(500).send("No se pudo cerrar sesión .");
     }
     res.redirect("/views/login");
   });
@@ -98,7 +99,7 @@ export const getCurrentSession = (req, res) => {
   if (req.session.user) {
     return res.json({ user: req.session.user });
   } else {
-    return res.status(401).json({ msg: "No user session found" });
+    return res.status(401).json({ msg: "No se encuentra sesión del usuario" });
   }
 };
 
@@ -115,9 +116,9 @@ export const requestPasswordReset = async (req, res, next) => {
 
     // Generar un token de recuperación
     const resetToken = crypto.randomBytes(20).toString("hex");
-    const tokenExpiration = Date.now() + 3600000; // Expira en 1 hora
+    const tokenExpiration = Date.now() + 3600000; // Expiración de 1 hora
 
-    // Guardar el token y su expiración en la base de datos del usuario
+    // Guardar el token en la bbdd
     await UserModel.updateOne(
       { _id: user._id },
       {
@@ -128,6 +129,7 @@ export const requestPasswordReset = async (req, res, next) => {
 
     // Enviar correo con el enlace de restablecimiento
     const resetLink = `http://localhost:8080/api/users/reset-password/${resetToken}`;
+
     await sendPasswordRecoveryEmail(user.email, resetLink);
 
     httpResponse.Ok(res, "Correo de recuperación enviado.");
@@ -136,13 +138,13 @@ export const requestPasswordReset = async (req, res, next) => {
   }
 };
 
-// Restablecer la contraseña
+//RESET
 export const resetPassword = async (req, res, next) => {
   try {
     const { token } = req.params;
     const { newPassword } = req.body;
 
-    // Buscar al usuario con el token y verificar si no ha expirado
+    // Buscar al usuario con el tokem
     const user = await UserModel.findOne({
       resetPasswordToken: token,
       resetPasswordExpires: { $gt: Date.now() },
@@ -152,7 +154,7 @@ export const resetPassword = async (req, res, next) => {
       return httpResponse.BadRequest(res, "Token inválido o expirado.");
     }
 
-    // Verificar que la nueva contraseña no sea igual a la anterior
+    // Verificar que la nueva pwd
     const isSamePassword = await bcrypt.compare(newPassword, user.password);
     if (isSamePassword) {
       return httpResponse.BadRequest(
@@ -161,7 +163,7 @@ export const resetPassword = async (req, res, next) => {
       );
     }
 
-    // Encriptar la nueva contraseña y actualizar los datos del usuario
+    // Encriptar la nueva contraseña y actualiza
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     user.resetPasswordToken = null;
@@ -169,7 +171,7 @@ export const resetPassword = async (req, res, next) => {
 
     await user.save();
 
-    httpResponse.Ok(res, "Contraseña restablecida exitosamente.");
+    return httpResponse.Ok(res, "Contraseña restablecida exitosamente.");
   } catch (error) {
     next(error);
   }

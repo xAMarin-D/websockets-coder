@@ -31,6 +31,14 @@ const userSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Carts",
   },
+  resetPasswordToken: {
+    type: String,
+    required: false,
+  },
+  resetPasswordExpires: {
+    type: Date,
+    required: false,
+  },
 });
 
 export const UserModel = model("users2", userSchema);

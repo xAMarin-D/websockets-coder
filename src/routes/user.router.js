@@ -25,7 +25,6 @@ router.post(
   })
 );
 
-//login postman
 router.post("/loginp", login);
 router.post("/logoutp", logout);
 router.get(
@@ -48,7 +47,6 @@ router.put("/premium/:uid", async (req, res, next) => {
   try {
     const { uid } = req.params;
 
-    // Buscar el usuario en la base de datos por su ID
     const user = await UserModel.findById(uid);
 
     if (!user) {
@@ -59,7 +57,6 @@ router.put("/premium/:uid", async (req, res, next) => {
     const newRole = user.role === "user" ? "premium" : "user";
     user.role = newRole;
 
-    // Guardar los cambios en la base de datos
     const updatedUser = await user.save();
 
     res.json({
@@ -76,5 +73,10 @@ router.post("/request-password-reset", isAuth, requestPasswordReset);
 
 // Restablecer pass
 router.post("/reset-password/:token", resetPassword);
+
+router.get("/reset-password/:token", (req, res) => {
+  const { token } = req.params;
+  res.render("reset-password", { token });
+});
 
 export default router;
