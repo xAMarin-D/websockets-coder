@@ -1,0 +1,128 @@
+paths:
+  /products:
+    get:
+      summary: Obtener lista de productos
+      responses:
+        200:
+          description: Lista de productos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Products"
+        500:
+          description: Error del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalServerError"
+    post:
+      summary: Crear un nuevo producto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        201:
+          description: Producto creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        400:
+          description: Error en los datos enviados
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequest"
+
+  /products/{id}:
+    get:
+      summary: Obtener un producto por ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: ID del producto
+      responses:
+        200:
+          description: Producto encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        404:
+          description: Producto no encontrado
+        500:
+          description: Error del servidor
+
+    put:
+      summary: Actualizar un producto por ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: ID del producto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        200:
+          description: Producto actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        400:
+          description: Error en los datos enviados
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequest"
+        404:
+          description: Producto no encontrado
+        500:
+          description: Error del servidor
+
+  /carts:
+    get:
+      summary: Obtener lista de carritos
+      responses:
+        200:
+          description: Lista de carritos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Carts"
+        500:
+          description: Error del servidor
+
+    post:
+      summary: Crear un nuevo carrito
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CartInput"
+      responses:
+        201:
+          description: Carrito creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+        400:
+          description: Error en los datos enviados
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequest"

@@ -24,11 +24,15 @@ import ticketRouter from "./routes/ticket.router.js";
 import ProductService from "./services/product.services.js";
 import emailRouter from "./routes/email.router.js";
 import mockingRouter from "./routes/mocking.router.js";
+import swaggerUi from "swagger-ui-express";
+import swaggerJsdoc from "swagger-jsdoc";
+import { info } from "./docs/info.js";
 //import { MessageModel } from "./daos/mongodb/models/chat.model.js";
 
 //INIT CONF
 const app = express();
 const httpServer = createServer(app);
+const swaggerDocs = swaggerJsdoc(info);
 
 //CONF SESION & MONGO
 const storeConfig = {
@@ -73,6 +77,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// Swagger route
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
 app.use(
   "/api",
   (req, res, next) => {
@@ -92,6 +99,7 @@ app.use("/views", viewsRouter);
 app.use("/api/sessions", sessionRouter);
 app.use("/ticket", ticketRouter);
 app.use("/api/users", userRouter);
+
 //VISTAS
 app.get("/", (req, res) => {
   res.redirect("/views/login");
