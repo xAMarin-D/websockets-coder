@@ -27,7 +27,6 @@ import mockingRouter from "./routes/mocking.router.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 import { info } from "./docs/info.js";
-//import { MessageModel } from "./daos/mongodb/models/chat.model.js";
 
 //INIT CONF
 const app = express();
@@ -146,38 +145,21 @@ app.get("/loggerTest", (req, res) => {
   res.send("¡Los logs han sido enviados!");
 });
 
-//CONENCTION CHAT (EN DESUSO)
-/* 
-const io = new SocketIOServer(httpServer);
-io.on("connection", (socket) => {
-  console.log("Usuario conectado");
-
-  socket.on("newMessage", async (data) => {
-    const { email, message } = data;
-    try {
-      const chatMessage = new MessageModel({ email, message });
-      await chatMessage.save();
-      io.emit("message", data);
-    } catch (error) {
-      console.error("Error saving message:", error);
-    }
-  });
-
-  socket.on("disconnect", () => {
-    console.log("Usuario desconectado");
-  });
-});
-*/
-
 app.use(errorHandler);
 
 //MONGO CONF
 if (process.env.PERSISTENCE === "MONGO") {
-  initMongoDB();
+  initMongoDB()
+    .then(() => {
+      const PORT = 8080;
+      httpServer.listen(PORT, () => {
+        console.log(`Server ok en port ${PORT}`);
+        logger.info(`Server ok en port ${PORT}`);
+      });
+    })
+    .catch((error) => {
+      console.error("Error al iniciar el servidor:", error);
+    });
 }
 
-const PORT = 8080;
-httpServer.listen(PORT, () => {
-  console.log(`Server ok en port ${PORT}`);
-  logger.info(`Server ok en port ${PORT}`);
-});
+export default app;

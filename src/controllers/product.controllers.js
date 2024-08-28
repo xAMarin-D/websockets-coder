@@ -81,17 +81,21 @@ export const getById = async (req, res, next) => {
 
 export const create = async (req, res, next) => {
   try {
-    console.log(req.session.user);
+    const user = req.session.user;
+
+    // Verificar si el usuario existe en la sesión
+    if (!user) {
+      return res
+        .status(403)
+        .json({ msg: "No tienes permisos para crear productos" });
+    }
 
     // Verificar si el usuario es admin o premium
-    if (
-      req.session.user.role === "admin" ||
-      req.session.user.role === "premium"
-    ) {
+    if (user.role === "admin" || user.role === "premium") {
       // Asignar el owner del producto
       const productData = {
         ...req.body,
-        owner: req.session.user.email || "admin", // Establecer el owner como el email del usuario o "admin" por defecto
+        owner: user.email || "admin", // Establecer el owner como el email del usuario o "admin" por defecto
       };
 
       const newProd = await productService.create(productData);
@@ -99,7 +103,7 @@ export const create = async (req, res, next) => {
       if (!newProd) {
         res.status(404).json({ msg: "Error creating product" });
       } else {
-        res.json(newProd);
+        res.status(201).json(newProd); // Cambiado a 201 para indicar creación exitosa
       }
     } else {
       return res
@@ -110,7 +114,6 @@ export const create = async (req, res, next) => {
     next(error);
   }
 };
-
 export const remove = async (req, res, next) => {
   try {
     const user = req.session?.user;
@@ -165,11 +168,9 @@ export const remove = async (req, res, next) => {
     }
 
     // Si el usuario no es admin ni premium
-    return res
-      .status(403)
-      .json({
-        msg: "No tienes los permisos necesarios para eliminar productos",
-      });
+    return res.status(403).json({
+      msg: "No tienes los permisos necesarios para eliminar productos",
+    });
   } catch (error) {
     console.error("Error eliminando producto:", error);
     res
