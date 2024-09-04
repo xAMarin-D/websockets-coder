@@ -76,6 +76,9 @@ app.use((req, res, next) => {
   next();
 });
 
+//Ruta exclusiva
+app.use("/api/users", userRouter);
+
 // Swagger route
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 

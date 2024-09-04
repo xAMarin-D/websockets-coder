@@ -39,6 +39,16 @@ const userSchema = new Schema({
     type: Date,
     required: false,
   },
+  documents: [
+    {
+      name: { type: String, required: true },
+      reference: { type: String, required: true },
+    },
+  ],
+  last_connection: {
+    type: Date,
+    default: null,
+  },
 });
 
 export const UserModel = model("users2", userSchema);

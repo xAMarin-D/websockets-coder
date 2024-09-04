@@ -9,9 +9,12 @@ import {
   getCurrentSession,
   requestPasswordReset,
   resetPassword,
+  changeUserRoleToPremium,
+  uploadDocuments,
 } from "../controllers/user.controllers.js";
 import { isAuth } from "../middlewares/isAuth.js";
 import { UserModel } from "../daos/mongodb/models/user.model.js";
+import upload from "../middlewares/multer.js";
 
 const router = Router();
 
@@ -43,31 +46,6 @@ router.get("/profile", profile);
 router.post("/logout", logout);
 router.get("/api/sessions/current", getCurrentSession);
 
-router.put("/premium/:uid", async (req, res, next) => {
-  try {
-    const { uid } = req.params;
-
-    const user = await UserModel.findById(uid);
-
-    if (!user) {
-      return res.status(404).json({ msg: "Usuario no encontrado" });
-    }
-
-    // Cambiar el rol del usuario entre 'user' y 'premium'
-    const newRole = user.role === "user" ? "premium" : "user";
-    user.role = newRole;
-
-    const updatedUser = await user.save();
-
-    res.json({
-      msg: `El rol del usuario ha sido cambiado a ${newRole}`,
-      user: updatedUser,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
 // Solicitar res(debe estar logueado)
 router.post("/request-password-reset", isAuth, requestPasswordReset);
 
@@ -78,5 +56,19 @@ router.get("/reset-password/:token", (req, res) => {
   const { token } = req.params;
   res.render("reset-password", { token });
 });
+
+//PF4 Ruta exclusiva
+router.put("/premium/:uid", changeUserRoleToPremium);
+
+//Ruta para documents
+router.post(
+  "/:uid/documents",
+  upload.fields([
+    { name: "identification", maxCount: 1 },
+    { name: "address_proof", maxCount: 1 },
+    { name: "account_statement", maxCount: 1 },
+  ]),
+  uploadDocuments
+);
 
 export default router;

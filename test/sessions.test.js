@@ -29,6 +29,6 @@ describe("Sessions API", () => {
 
   it("Debe cerrar sesión correctamente", async function () {
     const response = await request.post("/users/logout");
-    expect(response.status).to.equal(302); // Cambia la expectativa a 302
+    expect(response.status).to.equal(302);
   });
 });

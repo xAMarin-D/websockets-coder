@@ -13,7 +13,6 @@ describe("Products API", function () {
       password: "testpassword",
     });
 
-    // Verificacion de cookie
     cookie = loginResponse.headers["set-cookie"];
     console.log("Cookie obtenida después de iniciar sesión:", cookie);
 

@@ -19,15 +19,14 @@ export const login = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({ msg: "No estás autorizado" });
     }
+
+    // Actualizar el campo last_connection
+    user.last_connection = new Date();
+    await user.save();
+
     req.session.user = user;
     res.send("Usuario logeado correctamente");
-    // req.login(user, (err) => {
-    //   if (err) {
-    //     return next(err);
-    //   }
-    //   req.session.user = user; // Almacenar los datos del usuario en la sesión
-    //   //res.redirect("/views/profile");
-    // });
+
     logger.info(
       `Detalles del usuario en la sesión: ${JSON.stringify(req.session.user)}`
     );
@@ -35,7 +34,6 @@ export const login = async (req, res, next) => {
     next(error);
   }
 };
-
 export const profile = (req, res) => {
   logger.info(`Usuario en la sesión: ${JSON.stringify(req.session.user)}`);
   logger.info(`Usuario de passport: ${JSON.stringify(req.user)}`);
@@ -59,21 +57,21 @@ export const register = async (req, res) => {
       const user = await userDao.register({
         ...req.body,
         role: "admin",
-        cartId: cart._id, // Asignar el ID del carrito al usuario
+        cartId: cart._id,
       });
       if (!user) res.status(401).json({ msg: "Usuario existe!" });
       else {
-        req.session.user = user; // Almacenar los datos del usuario en la sesión
+        req.session.user = user;
         res.redirect("/views/login");
       }
     } else {
       const user = await userDao.register({
         ...req.body,
-        cartId: cart._id, // Asignar el ID del carrito al usuario
+        cartId: cart._id,
       });
       if (!user) res.status(401).json({ msg: "Usuario existe!" });
       else {
-        req.session.user = user; // Almacenar los datos del usuario en la sesión
+        req.session.user = user;
         res.redirect("/views/login");
       }
     }
@@ -86,13 +84,28 @@ export const githubResponse = async (req, res) => {
   res.redirect("/views/profile");
 };
 
-export const logout = (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).send("No se pudo cerrar sesión .");
+export const logout = async (req, res) => {
+  try {
+    if (!req.session.user) {
+      return res.redirect("/views/login");
     }
-    res.redirect("/views/login");
-  });
+
+    const user = await UserModel.findById(req.session.user._id);
+
+    if (user) {
+      user.last_connection = new Date();
+      await user.save();
+    }
+
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).send("No se pudo cerrar sesión.");
+      }
+      res.redirect("/views/login");
+    });
+  } catch (error) {
+    res.status(500).send("Error en el cierre de sesión.");
+  }
 };
 
 export const getCurrentSession = (req, res) => {
@@ -174,5 +187,95 @@ export const resetPassword = async (req, res, next) => {
     return httpResponse.Ok(res, "Contraseña restablecida exitosamente.");
   } catch (error) {
     next(error);
+  }
+};
+
+export const changeUserRoleToPremium = async (req, res) => {
+  const { uid } = req.params;
+
+  try {
+    const user = await UserModel.findById(uid);
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    // Si el usuario está intentando cambiar de "user" a "premium", verificar los documentos
+    if (user.role === "user") {
+      const requiredDocuments = [
+        "Identificación",
+        "Comprobante de domicilio",
+        "Comprobante de estado de cuenta",
+      ];
+      const hasAllDocuments = requiredDocuments.every((doc) =>
+        user.documents.some((userDoc) => userDoc.name === doc)
+      );
+
+      if (!hasAllDocuments) {
+        return res
+          .status(400)
+          .json({ error: "Faltan documentos para completar el proceso" });
+      }
+
+      user.role = "premium";
+    } else {
+      // Si el rol es "premium", cambiar de nuevo a "user"
+      user.role = "user";
+    }
+
+    await user.save();
+
+    res.json({ message: `Rol cambiado a ${user.role}`, user });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const uploadDocuments = async (req, res) => {
+  const { uid } = req.params;
+
+  try {
+    const user = await UserModel.findById(uid);
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    if (req.files && Object.keys(req.files).length > 0) {
+      const documents = [];
+
+      if (req.files.identification) {
+        documents.push({
+          name: "Identificación",
+          reference: req.files.identification[0].path,
+        });
+      }
+
+      if (req.files.address_proof) {
+        documents.push({
+          name: "Comprobante de domicilio",
+          reference: req.files.address_proof[0].path,
+        });
+      }
+
+      if (req.files.account_statement) {
+        documents.push({
+          name: "Comprobante de estado de cuenta",
+          reference: req.files.account_statement[0].path,
+        });
+      }
+
+      user.documents.push(...documents);
+      await user.save();
+
+      res.json({
+        message: "Documentos subidos con éxito",
+        documents: user.documents,
+      });
+    } else {
+      res.status(400).json({ error: "No se subieron archivos" });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
