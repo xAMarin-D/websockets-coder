@@ -9,7 +9,7 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     let uploadDir;
 
-    // Rutas
+    // Rutasss
     switch (file.fieldname) {
       case "documents":
         uploadDir = path.join(__dirname, "../../src/public/uploads/documents/");
