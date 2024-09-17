@@ -11,6 +11,8 @@ import {
   resetPassword,
   changeUserRoleToPremium,
   uploadDocuments,
+  getAllUsers,
+  deleteInactiveUsers,
 } from "../controllers/user.controllers.js";
 import { isAuth } from "../middlewares/isAuth.js";
 import { UserModel } from "../daos/mongodb/models/user.model.js";
@@ -70,5 +72,8 @@ router.post(
   ]),
   uploadDocuments
 );
+
+router.get("/", getAllUsers);
+router.delete("/inactive", deleteInactiveUsers);
 
 export default router;

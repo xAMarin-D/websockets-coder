@@ -4,6 +4,7 @@ import CartDao from "../daos/mongodb/cart.dao.js";
 import { logger } from "../utils/logger.js";
 import { sendPasswordRecoveryEmail } from "../services/email.service.js";
 import { HttpResponse } from "../utils/http.response.js";
+import { sendInactivityEmail } from "../services/email.service.js";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 
@@ -200,7 +201,7 @@ export const changeUserRoleToPremium = async (req, res) => {
       return res.status(404).json({ error: "Usuario no encontrado" });
     }
 
-    // Si el usuario está intentando cambiar de "user" a "premium", verificar los documentos
+    // verificar documentos de user -> pre,mium
     if (user.role === "user") {
       const requiredDocuments = [
         "Identificación",
@@ -219,7 +220,7 @@ export const changeUserRoleToPremium = async (req, res) => {
 
       user.role = "premium";
     } else {
-      // Si el rol es "premium", cambiar de nuevo a "user"
+      // premium a user
       user.role = "user";
     }
 
@@ -277,5 +278,37 @@ export const uploadDocuments = async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await UserModel.find({}, "first_name last_name email role");
+    res.json({ users });
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener usuarios" });
+  }
+};
+
+export const deleteInactiveUsers = async (req, res) => {
+  try {
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000); // Cambia por 30 minutos para pruebas
+    const inactiveUsers = await UserModel.find({
+      last_connection: { $lt: twoDaysAgo },
+    });
+
+    const userIds = inactiveUsers.map((user) => user._id);
+
+    // Eliminar los usuarios inactivos
+    await UserModel.deleteMany({ _id: { $in: userIds } });
+
+    // Enviar correos de notificación
+    inactiveUsers.forEach((user) => {
+      sendInactivityEmail(user.email);
+    });
+
+    res.json({ message: "Usuarios inactivos eliminados y correos enviados" });
+  } catch (error) {
+    res.status(500).json({ error: "Error al eliminar usuarios inactivos" });
   }
 };

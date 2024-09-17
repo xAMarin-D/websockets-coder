@@ -1,6 +1,7 @@
 import ProductService from "../services/product.services.js";
 import mongoose from "mongoose";
 import { HttpResponse } from "../utils/http.response.js";
+import { sendProductDeletionEmail } from "../services/email.service.js"; // Importar la función para enviar el correo de eliminación
 
 const httpResponse = new HttpResponse();
 const productService = new ProductService();
@@ -114,6 +115,7 @@ export const create = async (req, res, next) => {
     next(error);
   }
 };
+
 export const remove = async (req, res, next) => {
   try {
     const user = req.session?.user;
@@ -153,6 +155,10 @@ export const remove = async (req, res, next) => {
     if (user.role === "premium") {
       if (product.owner === user.email) {
         const prodDel = await productService.delete(id);
+
+        // Enviar correo si el producto pertenece a un usuario premium
+        await sendProductDeletionEmail(user.email, product.name);
+
         if (!prodDel) {
           return res.status(500).json({ msg: "Error al eliminar producto" });
         }
